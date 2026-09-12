@@ -1,0 +1,119 @@
+{
+  "common": {
+    "appName": "Smart School System",
+    "search": "Search...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "actions": "Actions",
+    "status": "Status",
+    "all": "All",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "export": "Export",
+    "exportExcel": "Excel Spreadsheet (.xlsx)",
+    "exportPdf": "PDF Document (.pdf)",
+    "exportWord": "Word Document (.docx)",
+    "exportPptx": "PowerPoint Presentation (.pptx)",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "classes": "Classes",
+    "students": "Students",
+    "attendance": "Attendance",
+    "grades": "Grades",
+    "homework": "Assignments",
+    "billing": "Billing",
+    "settings": "Settings",
+    "logout": "Sign Out"
+  },
+  "auth": {
+    "welcome": "Smart School Portal",
+    "subtitle": "Sign in to access student management",
+    "login": "Sign In",
+    "email": "Email Address",
+    "password": "Password",
+    "useOtp": "Login with OTP Code",
+    "usePassword": "Login with Password",
+    "sendOtp": "Send OTP Code",
+    "enterOtp": "Enter 6-digit Code",
+    "verifyOtp": "Verify Code",
+    "otpSent": "We sent a 6-digit verification code to your email.",
+    "invalidOtp": "Invalid OTP code. Please try again."
+  },
+  "dashboard": {
+    "overview": "Overview & Statistics",
+    "totalStudents": "Total Students",
+    "totalClasses": "Total Classes",
+    "attendanceRate": "Attendance Rate",
+    "avgGrade": "Average Grade",
+    "recentActivity": "Recent Activity",
+    "customOrderBanner": "Custom Order Enabled — Drag rows to adjust ranking. Order is saved locally."
+  },
+  "students": {
+    "title": "Students Directory",
+    "addStudent": "Add Student",
+    "id": "Student ID",
+    "name": "Full Name",
+    "gender": "Gender",
+    "class": "Class",
+    "phone": "Phone Number",
+    "status": "Enrollment Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "tableView": "Table View",
+    "gridView": "Card Grid"
+  },
+  "attendance": {
+    "title": "Attendance Sheet",
+    "date": "Date",
+    "present": "Present",
+    "absent": "Absent",
+    "late": "Late",
+    "permission": "Permission",
+    "markAllPresent": "Mark All Present",
+    "saveAttendance": "Save Attendance"
+  },
+  "grades": {
+    "title": "Grade Matrix & Rankings",
+    "student": "Student",
+    "subject": "Subject",
+    "score": "Score",
+    "rank": "Rank",
+    "gpa": "GPA",
+    "comments": "Comments"
+  },
+  "homework": {
+    "title": "Assignments & Homework",
+    "createHomework": "Create Assignment",
+    "dueDate": "Due Date",
+    "submissions": "Submissions",
+    "review": "Review",
+    "grade": "Grade",
+    "feedback": "Feedback"
+  },
+  "billing": {
+    "title": "Invoices & Billing",
+    "createInvoice": "Create Invoice",
+    "invoiceNo": "Invoice #",
+    "amount": "Amount",
+    "paid": "Paid",
+    "pending": "Pending",
+    "rejected": "Rejected"
+  },
+  "settings": {
+    "title": "System & Profile Settings",
+    "profile": "Profile",
+    "notifications": "Notification & Audio Alerts",
+    "soundTheme": "Chime Tone",
+    "volume": "Volume",
+    "previewSound": "Preview Alert Tone",
+    "language": "Interface Language",
+    "khmer": "Khmer (ភាសាខ្មែរ)",
+    "english": "English"
+  }
+}
