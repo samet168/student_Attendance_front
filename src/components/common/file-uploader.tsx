@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { CloudArrowUp, CheckCircle, WarningCircle, X } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { getApiBaseUrl } from '@/lib/api';
 
 interface FileUploaderProps {
   onUploadSuccess: (url: string, filename: string) => void;
@@ -45,7 +46,8 @@ export function FileUploader({
     try {
       const token = localStorage.getItem('token');
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1'}/notifications/upload-attachment`);
+      const apiBase = getApiBaseUrl();
+      xhr.open('POST', `${apiBase}/notifications/upload-attachment`);
 
       if (token) {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);

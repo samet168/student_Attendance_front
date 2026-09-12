@@ -1,4 +1,13 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    const host = window.location.hostname;
+    // If accessing via IP or non-localhost, point backend to that same host on port 8000
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return `http://${host}:8000/api/v1`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+}
 
 export function getAuthToken(): string | null {
   if (typeof window !== 'undefined') {
@@ -30,7 +39,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  const apiBase = getApiBaseUrl();
+  const res = await fetch(`${apiBase}${endpoint}`, {
     ...options,
     headers,
   });
@@ -231,7 +241,8 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE}/homework/upload`, {
+    const apiBase = getApiBaseUrl();
+    const res = await fetch(`${apiBase}/homework/upload`, {
       method: 'POST',
       headers,
       body: formData,
@@ -264,7 +275,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  getDownloadUrl: (notificationId: number) => `${API_BASE}/notifications/${notificationId}/download`,
+  getDownloadUrl: (notificationId: number) => `${getApiBaseUrl()}/notifications/${notificationId}/download`,
 
   // Billing
   getInvoices: () => request<any[]>('/billing/invoices'),

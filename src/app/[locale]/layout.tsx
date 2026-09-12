@@ -51,12 +51,31 @@ export default async function LocaleLayout({
                     document.documentElement.classList.remove('dark');
                   }
                 } catch (e) {}
+
+                // Filter out browser extension hydration warnings (e.g. Bitdefender bis_skin_checked)
+                if (typeof window !== 'undefined') {
+                  var origError = console.error;
+                  console.error = function() {
+                    var msg = arguments[0];
+                    if (typeof msg === 'string' && (
+                      msg.indexOf('bis_skin_checked') !== -1 ||
+                      msg.indexOf('bis_register') !== -1 ||
+                      msg.indexOf('extra attributes from the server') !== -1
+                    )) {
+                      return;
+                    }
+                    origError.apply(console, arguments);
+                  };
+                }
               })();
             `,
           }}
         />
       </head>
-      <body className="min-h-screen bg-slate-50 dark:bg-[#131417] text-slate-900 dark:text-zinc-100 font-sans antialiased selection:bg-blue-600 selection:text-white">
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-slate-50 dark:bg-[#131417] text-slate-900 dark:text-zinc-100 font-sans antialiased selection:bg-blue-600 selection:text-white"
+      >
         {children}
       </body>
     </html>

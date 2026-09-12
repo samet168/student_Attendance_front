@@ -271,7 +271,7 @@ export default function StudentAttendancePage() {
 
                 {/* Day rows */}
                 {!isCollapsed && (
-                  <div className="divide-y" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', divideColor: 'rgba(255,255,255,0.04)' }}>
+                  <div className="divide-y divide-white/[0.04] border-t border-white/[0.04]">
                     {monthRecords.map((r, idx) => {
                       const cfg = STATUS_CONFIG[r.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.absent;
                       const Icon = cfg.icon;
@@ -279,7 +279,6 @@ export default function StudentAttendancePage() {
                         <div
                           key={idx}
                           className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition"
-                          style={{ borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.04)' : undefined }}
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot} shrink-0`} />

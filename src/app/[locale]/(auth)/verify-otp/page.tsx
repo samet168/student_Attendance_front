@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/use-auth-store';
 import Link from 'next/link';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { getApiBaseUrl } from '@/lib/api';
 
 function VerifyOtpForm() {
   const router = useRouter();
@@ -30,7 +31,8 @@ function VerifyOtpForm() {
 
   useEffect(() => {
     if (emailParam) {
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1'}/auth/latest-otp?email=${encodeURIComponent(emailParam)}`)
+      const apiBase = getApiBaseUrl();
+      fetch(`${apiBase}/auth/latest-otp?email=${encodeURIComponent(emailParam)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data && data.code) {
@@ -82,7 +84,8 @@ function VerifyOtpForm() {
     setError(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1'}/auth/verify-otp`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -10,7 +10,6 @@ import {
   MagnifyingGlass, Funnel, FileArrowDown
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import { useUIStore } from '@/stores/use-ui-store';
 import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
@@ -704,78 +703,208 @@ export default function HomeworkPage() {
           </Button>
         </div>
       ) : viewMode === 'table' ? (
+        /* ══════════════════════════════════════════════════════════
+           MODERN TABLE VIEW
+           ══════════════════════════════════════════════════════════ */
         <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] overflow-hidden shadow-xs">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-100 dark:border-[#282a32]">
-                <TableHead className="w-32">{isKm ? 'មុខវិជ្ជា' : 'Subject'}</TableHead>
-                <TableHead>{isKm ? 'ចំណងជើងកិច្ចការ' : 'Title'}</TableHead>
-                <TableHead className="w-36">{isKm ? 'ប្រភេទ/ឯកសារ' : 'Type/File'}</TableHead>
-                <TableHead className="w-36">{isKm ? 'កាលបរិច្ឆេទកំណត់' : 'Deadline'}</TableHead>
-                <TableHead className="text-center w-28">{isKm ? 'បានប្រគល់' : 'Turned In'}</TableHead>
-                <TableHead className="text-right w-36">{isKm ? 'សកម្មភាព' : 'Actions'}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {homeworks
-                .filter((hw) =>
-                  hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((hw) => {
-                  const count = hw.submissions_count ?? hw.submission_count ?? 0;
-                  return (
-                    <TableRow key={hw.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16171b] border-slate-100 dark:border-[#282a32]">
-                      <TableCell>
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                          {hw.subject}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-bold text-xs text-slate-800 dark:text-white">
-                        <div>{hw.title}</div>
-                        {hw.description && <div className="text-[11px] text-slate-400 font-normal line-clamp-1 mt-0.5">{hw.description}</div>}
-                      </TableCell>
-                      <TableCell>
-                        {hw.is_qcm ? (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 inline-flex items-center gap-1">
-                            <ListChecks size={12} />
-                            QCM ({hw.question_count || 0})
+          {/* Table header bar */}
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-[#282a32] flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {homeworks.filter((hw) =>
+                hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length}{' '}
+              {isKm ? 'កិច្ចការ' : 'assignments'}
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-[#282a32]">
+                  <th className="text-left px-5 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-36">
+                    {isKm ? 'មុខវិជ្ជា' : 'Subject'}
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    {isKm ? 'ចំណងជើង & ការណែនាំ' : 'Title & Instructions'}
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-44">
+                    {isKm ? 'ប្រភេទ / ឯកសារ' : 'Type / File'}
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-36">
+                    {isKm ? 'ថ្ងៃផុតកំណត់' : 'Deadline'}
+                  </th>
+                  <th className="text-center px-4 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-28">
+                    {isKm ? 'ប្រគល់' : 'Turned In'}
+                  </th>
+                  <th className="text-right px-5 py-3 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-32">
+                    {isKm ? 'សកម្មភាព' : 'Actions'}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-[#282a32]">
+                {homeworks
+                  .filter((hw) =>
+                    hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((hw) => {
+                    const count = hw.submissions_count ?? hw.submission_count ?? 0;
+                    const total = hw.total_students ?? 0;
+                    const isPast = new Date(hw.deadline) < new Date();
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+                    return (
+                      <tr
+                        key={hw.id}
+                        className="group hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
+                      >
+                        {/* Subject badge */}
+                        <td className="px-5 py-4 align-middle">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${
+                            hw.subject.includes('Math') || hw.subject.includes('គណិត')
+                              ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                              : hw.subject.includes('Physics') || hw.subject.includes('រូប')
+                              ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                              : hw.subject.includes('English') || hw.subject.includes('អង់')
+                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                              : hw.subject.includes('Khmer') || hw.subject.includes('ខ្មែរ')
+                              ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                              : hw.subject.includes('Chemistry') || hw.subject.includes('គីមី')
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                          }`}>
+                            {hw.subject.split('(')[0].trim()}
                           </span>
-                        ) : hw.file_url ? (
-                          <a href={hw.file_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-                            <FileText size={13} />
-                            <span>{hw.file_name || 'File'}</span>
-                          </a>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-500 font-mono">
-                        {new Date(hw.deadline).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${count > 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                          {count}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Link href={`/${locale}/homework/${hw.id}`} className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold">
-                            <ArrowRight size={15} />
-                          </Link>
-                          <button onClick={() => handleOpenEdit(hw)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
-                            <PencilSimple size={14} />
-                          </button>
-                          <button onClick={() => handleDeleteHomework(hw.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
-                            <Trash size={14} />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
+                        </td>
+
+                        {/* Title + description */}
+                        <td className="px-4 py-4 align-middle min-w-0 max-w-xs">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {hw.title}
+                          </p>
+                          {hw.description && (
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 font-normal">
+                              {hw.description}
+                            </p>
+                          )}
+                        </td>
+
+                        {/* Type / File */}
+                        <td className="px-4 py-4 align-middle">
+                          {hw.is_qcm ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 whitespace-nowrap">
+                              <ListChecks size={12} weight="bold" />
+                              QCM — {hw.question_count ?? 0} {isKm ? 'សំណួរ' : 'Q'}
+                            </span>
+                          ) : hw.file_url ? (
+                            <a
+                              href={hw.file_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition whitespace-nowrap max-w-[160px]"
+                            >
+                              <FileText size={12} />
+                              <span className="truncate">{hw.file_name || 'File'}</span>
+                              <FileArrowDown size={11} className="shrink-0" />
+                            </a>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">
+                              {isKm ? 'គ្មានឯកសារ' : 'No file'}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Deadline */}
+                        <td className="px-4 py-4 align-middle whitespace-nowrap">
+                          <div className={`inline-flex flex-col gap-0.5 ${isPast ? 'text-rose-500 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                            <span className="text-xs font-bold">
+                              {new Date(hw.deadline).toLocaleDateString(
+                                isKm ? 'km-KH' : 'en-US',
+                                { day: '2-digit', month: 'short', year: 'numeric' }
+                              )}
+                            </span>
+                            <span className={`text-[10px] font-medium ${isPast ? 'text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                              {new Date(hw.deadline).toLocaleTimeString(
+                                isKm ? 'km-KH' : 'en-US',
+                                { hour: '2-digit', minute: '2-digit' }
+                              )}
+                              {isPast && (` • ${isKm ? 'ផុតកំណត់' : 'Expired'}`)}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Submission count + progress */}
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`text-sm font-black ${count > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                              {count}
+                              {total > 0 && (
+                                <span className="text-[10px] font-semibold text-slate-400 ml-0.5">
+                                  /{total}
+                                </span>
+                              )}
+                            </span>
+                            {total > 0 && (
+                              <div className="w-16 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${pct >= 80 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-rose-400'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-5 py-4 align-middle">
+                          <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                            {/* Review */}
+                            <Link
+                              href={`/${locale}/homework/${hw.id}`}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition whitespace-nowrap cursor-pointer"
+                              title={isKm ? 'ពិនិត្យការប្រគល់' : 'Review submissions'}
+                            >
+                              <ArrowRight size={13} weight="bold" />
+                              <span className="hidden sm:inline">{isKm ? 'ពិនិត្យ' : 'Review'}</span>
+                            </Link>
+
+                            {/* Edit */}
+                            <button
+                              onClick={() => handleOpenEdit(hw)}
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition cursor-pointer"
+                              title={isKm ? 'កែប្រែ' : 'Edit'}
+                            >
+                              <PencilSimple size={14} weight="bold" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => handleDeleteHomework(hw.id)}
+                              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                              title={isKm ? 'លុប' : 'Delete'}
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Empty filtered state */}
+          {homeworks.filter((hw) =>
+            hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length === 0 && (
+            <div className="py-16 text-center text-slate-400">
+              <BookOpen size={32} className="mx-auto mb-2 opacity-30" />
+              <p className="text-xs">{isKm ? 'រកមិនឃើញ' : 'No results found'}</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
