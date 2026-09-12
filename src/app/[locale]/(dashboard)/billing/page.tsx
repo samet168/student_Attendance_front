@@ -15,6 +15,8 @@ interface InvoiceItem {
   student_id: number;
   title: string;
   amount: number;
+  total_amount?: number;
+  paid_amount?: number;
   currency: string;
   status: 'paid' | 'unpaid' | 'pending';
   due_date?: string | null;
@@ -114,15 +116,19 @@ export default function BillingPage() {
   }, [invoices, search, statusFilter]);
 
   const totalBilled = useMemo(() => {
-    return invoices.reduce((acc, curr) => acc + curr.amount, 0);
+    return invoices.reduce((acc, curr) => acc + (curr.total_amount ?? curr.amount ?? 0), 0);
   }, [invoices]);
 
   const totalPaid = useMemo(() => {
-    return invoices.filter((i) => i.status === 'paid').reduce((acc, curr) => acc + curr.amount, 0);
+    return invoices.reduce((acc, curr) => acc + (curr.paid_amount ?? (curr.status === 'paid' ? (curr.amount ?? 0) : 0)), 0);
   }, [invoices]);
 
   const totalPending = useMemo(() => {
-    return invoices.filter((i) => i.status !== 'paid').reduce((acc, curr) => acc + curr.amount, 0);
+    return invoices.reduce((acc, curr) => {
+      const tot = curr.total_amount ?? curr.amount ?? 0;
+      const pd = curr.paid_amount ?? (curr.status === 'paid' ? tot : 0);
+      return acc + (tot - pd);
+    }, 0);
   }, [invoices]);
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
@@ -152,6 +158,8 @@ export default function BillingPage() {
         student_code: targetStudent?.student_code || `STU-${studentId}`,
         title: title.trim(),
         amount: numAmount,
+        total_amount: numAmount,
+        paid_amount: 0,
         currency: 'USD',
         status: 'pending',
         due_date: dueDate,
@@ -363,7 +371,7 @@ export default function BillingPage() {
                     {inv.title}
                   </TableCell>
                   <TableCell className="text-right font-black text-xs text-slate-900 dark:text-white">
-                    ${inv.amount.toFixed(2)}
+                    ${(inv.total_amount ?? inv.amount ?? 0).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-xs text-slate-500 dark:text-slate-400">
                     {inv.due_date || '-'}

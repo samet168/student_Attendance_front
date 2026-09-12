@@ -76,11 +76,11 @@ export const api = {
   // Teacher Endpoints
   getTeacherStats: () => request<any>('/teacher/dashboard-stats'),
   getClasses: () => request<any[]>('/teacher/classes'),
-  createClass: (name: string, grade_level: string, academic_year?: string) => request<any>('/teacher/classes', {
+  createClass: (name: string, grade_level: string, academic_year?: string, teacher_id?: number) => request<any>('/teacher/classes', {
     method: 'POST',
-    body: JSON.stringify({ name, grade_level, academic_year }),
+    body: JSON.stringify({ name, grade_level, academic_year, teacher_id }),
   }),
-  updateClass: (classId: number, data: { name?: string; grade_level?: string; academic_year?: string }) =>
+  updateClass: (classId: number, data: { name?: string; grade_level?: string; academic_year?: string; teacher_id?: number }) =>
     request<any>(`/teacher/classes/${classId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -114,17 +114,40 @@ export const api = {
     request<any>(`/teacher/students/${studentId}`, {
       method: 'DELETE',
     }),
-  getAttendance: (classId: number, dateStr: string) => request<any[]>(`/teacher/attendance?class_id=${classId}&date_str=${dateStr}`),
-  saveAttendance: (classId: number, dateStr: string, records: { student_id: number; status: string; notes?: string }[]) =>
+  getAttendance: (classId: number, dateStr: string, subject?: string) => {
+    const subjParam = subject ? `&subject=${encodeURIComponent(subject)}` : '';
+    return request<any[]>(`/teacher/attendance?class_id=${classId}&date_str=${dateStr}${subjParam}`);
+  },
+  saveAttendance: (classId: number, dateStr: string, records: { student_id: number; status: string; notes?: string }[], subject?: string) =>
     request<any>('/teacher/attendance', {
       method: 'POST',
-      body: JSON.stringify({ class_id: classId, date: dateStr, records }),
+      body: JSON.stringify({ class_id: classId, date: dateStr, records, subject: subject || 'ទូទៅ' }),
     }),
-  getGradesMatrix: (classId: number) => request<any[]>(`/teacher/grades?class_id=${classId}`),
-  saveGrades: (classId: number, subject: string, dateStr: string, records: { student_id: number; score: number }[]) =>
+  getClassSubjects: (classId: number) => request<any[]>(`/teacher/classes/${classId}/subjects`),
+  assignClassSubject: (classId: number, teacherId: number, subjectName: string) =>
+    request<any>(`/teacher/classes/${classId}/subjects`, {
+      method: 'POST',
+      body: JSON.stringify({ class_id: classId, teacher_id: teacherId, subject_name: subjectName }),
+    }),
+  deleteClassSubject: (classId: number, subjectId: number) =>
+    request<any>(`/teacher/classes/${classId}/subjects/${subjectId}`, {
+      method: 'DELETE',
+    }),
+  getGradesMatrix: (classId: number, subject?: string) => {
+    const params = new URLSearchParams({ class_id: String(classId) });
+    if (subject) params.append('subject', subject);
+    return request<any[]>(`/teacher/grades?${params.toString()}`);
+  },
+  saveGrades: (classId: number, subject: string, dateStr: string, records: { student_id: number; score: number; max_score?: number }[], examType?: string) =>
     request<any>('/teacher/grades', {
       method: 'POST',
-      body: JSON.stringify({ class_id: classId, subject, date: dateStr, records }),
+      body: JSON.stringify({
+        class_id: classId,
+        subject,
+        exam_type: examType || 'ប្រឡងប្រចាំខែ (Monthly)',
+        date: dateStr,
+        records,
+      }),
     }),
 
   // Student Endpoints
@@ -199,11 +222,12 @@ export const api = {
     request<any>(`/homework/${homeworkId}/my-qcm-result`),
 
   // Cloudinary Direct Upload via backend proxy
-  uploadFile: async (file: File) => {
+  uploadFile: async (file: File, folder: string = 'school_assignments') => {
     const token = getAuthToken();
     const formData = new FormData();
     formData.append('file', file);
-    
+    formData.append('folder', folder);
+
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -259,7 +283,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Admin & RBAC
   getAdminStats: () => request<any>('/admin/stats'),
   getAdminUsers: (role?: string, search?: string) => {
     const params = new URLSearchParams();
@@ -285,5 +308,26 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ teacher_id: teacherId }),
     }),
-};
 
+  // Admin Subject Teacher Management
+  getAdminClassSubjects: () => request<any[]>('/admin/class-subjects'),
+  getAdminClassSubjectsByClass: (classId: number) => request<any[]>(`/admin/classes/${classId}/subjects`),
+  adminAssignClassSubject: (classId: number, teacherId: number, subjectName: string) =>
+    request<any>(`/admin/classes/${classId}/subjects`, {
+      method: 'POST',
+      body: JSON.stringify({ teacher_id: teacherId, subject_name: subjectName }),
+    }),
+  adminDeleteClassSubject: (classId: number, subjectId: number) =>
+    request<any>(`/admin/classes/${classId}/subjects/${subjectId}`, {
+      method: 'DELETE',
+    }),
+
+  // Rankings
+  getRankings: (scope: 'class' | 'subject' | 'school', options?: { classId?: number; subject?: string; gradeLevel?: string }) => {
+    const params = new URLSearchParams({ scope });
+    if (options?.classId) params.append('class_id', String(options.classId));
+    if (options?.subject) params.append('subject', options.subject);
+    if (options?.gradeLevel) params.append('grade_level', options.gradeLevel);
+    return request<any>(`/teacher/rankings?${params.toString()}`);
+  },
+};

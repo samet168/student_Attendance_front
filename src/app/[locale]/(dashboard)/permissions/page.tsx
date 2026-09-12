@@ -5,11 +5,13 @@ import { useParams } from 'next/navigation';
 import { 
   ShieldCheck, UserGear, Users, ChalkboardTeacher, 
   MagnifyingGlass, CheckCircle, WarningCircle, X,
-  IdentificationCard, Swap, UserPlus
+  IdentificationCard, Swap, UserPlus, BookOpen, Trash
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
+import { useUIStore } from '@/stores/use-ui-store';
+import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 
 interface UserItem {
   id: number;
@@ -54,6 +56,7 @@ export default function PermissionsPage() {
   const params = useParams();
   const locale = (params?.locale as string) || 'km';
   const isKm = locale === 'km';
+  const { viewMode } = useUIStore();
 
   const [users, setUsers] = useState<UserItem[]>(DEFAULT_USERS);
   const [classes, setClasses] = useState<SchoolClassItem[]>(DEFAULT_CLASSES);
@@ -87,6 +90,23 @@ export default function PermissionsPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Active tab
+  const [activeTab, setActiveTab] = useState<'staff' | 'subjects'>('staff');
+
+  // Subject assignment state
+  const [classSubjects, setClassSubjects] = useState<any[]>([]);
+  const [subjectClassId, setSubjectClassId] = useState<number>(0);
+  const [subjectTeacherId, setSubjectTeacherId] = useState<number>(0);
+  const [subjectName, setSubjectName] = useState('');
+  const [addingSubject, setAddingSubject] = useState(false);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
+
+  const SUBJECT_OPTIONS = [
+    'គណិតវិទ្យា (Math)', 'អក្សរសាស្ត្រខ្មែរ (Khmer)', 'ភាសាអង់គ្លេស (English)',
+    'រូបវិទ្យា (Physics)', 'គីមីវិទ្យា (Chemistry)', 'ជីវវិទ្យា (Biology)',
+    'ប្រវត្តិវិទ្យា (History)', 'ភូមិវិទ្យា (Geography)', 'ព័ត៌មានវិទ្យា (IT)',
+  ];
+
   useEffect(() => {
     loadData();
   }, []);
@@ -102,7 +122,6 @@ export default function PermissionsPage() {
       ]);
 
       if (usersRes.status === 'fulfilled' && Array.isArray(usersRes.value) && usersRes.value.length > 0) {
-        // Show only admin and teacher accounts
         const staffOnly = usersRes.value.filter((u: any) => u.role === 'admin' || u.role === 'teacher');
         setUsers(staffOnly.length > 0 ? staffOnly : DEFAULT_USERS);
       } else {
@@ -111,16 +130,20 @@ export default function PermissionsPage() {
       if (classesRes.status === 'fulfilled' && Array.isArray(classesRes.value) && classesRes.value.length > 0) {
         setClasses(classesRes.value);
         setSelectedClassId(classesRes.value[0].id);
+        setSubjectClassId(classesRes.value[0].id);
       } else {
         setClasses(DEFAULT_CLASSES);
         setSelectedClassId(1);
+        setSubjectClassId(1);
       }
       if (teachersRes.status === 'fulfilled' && Array.isArray(teachersRes.value) && teachersRes.value.length > 0) {
         setTeachers(teachersRes.value);
         setSelectedTeacherId(teachersRes.value[0].id);
+        setSubjectTeacherId(teachersRes.value[0].id);
       } else {
         setTeachers(DEFAULT_TEACHERS);
         setSelectedTeacherId(2);
+        setSubjectTeacherId(2);
       }
     } catch {
       setUsers(DEFAULT_USERS);
@@ -128,6 +151,19 @@ export default function PermissionsPage() {
       setTeachers(DEFAULT_TEACHERS);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadClassSubjects = async (classId: number) => {
+    if (!classId) return;
+    setSubjectsLoading(true);
+    try {
+      const data = await api.getAdminClassSubjectsByClass(classId);
+      setClassSubjects(Array.isArray(data) ? data : []);
+    } catch {
+      setClassSubjects([]);
+    } finally {
+      setSubjectsLoading(false);
     }
   };
 
@@ -188,22 +224,18 @@ export default function PermissionsPage() {
     setAssigning(true);
     setErrorMessage(null);
     try {
-      try {
-        await api.assignTeacherToClass(selectedClassId, selectedTeacherId);
-      } catch {
-        // fallback
-      }
-      const targetTeacher = teachers.find((t) => t.id === selectedTeacherId);
-      setClasses((prev) =>
-        prev.map((c) =>
-          c.id === selectedClassId
-            ? { ...c, teacher_id: selectedTeacherId, teacher_name: targetTeacher?.name || 'Assigned Teacher' }
-            : c
-        )
-      );
+      await api.assignTeacherToClass(selectedClassId, selectedTeacherId);
+      await loadData();
       setShowAssignModal(false);
-      setStatusMessage(isKm ? 'បានចាត់តាំងគ្រូបង្រៀនប្រចាំថ្នាក់ដោយជោគជ័យ!' : 'Teacher assigned to classroom successfully!');
+      const targetTeacher = teachers.find((t) => t.id === selectedTeacherId);
+      setStatusMessage(
+        isKm 
+          ? `បានចាត់តាំងថ្នាក់ (និងសិស្សទាំងអស់) ទៅកាន់ ${targetTeacher?.name || 'គ្រូថ្មី'} ដោយជោគជ័យ!` 
+          : 'Teacher assigned to classroom with all students successfully!'
+      );
       setTimeout(() => setStatusMessage(null), 3500);
+    } catch (err: any) {
+      setErrorMessage(err.message || (isKm ? 'បរាជ័យក្នុងការចាត់តាំងគ្រូ' : 'Failed to assign teacher'));
     } finally {
       setAssigning(false);
     }
@@ -287,6 +319,40 @@ export default function PermissionsPage() {
     );
   };
 
+  const handleAddSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subjectClassId || !subjectTeacherId || !subjectName.trim()) {
+      setErrorMessage(isKm ? 'សូមបំពេញព័ត៌មានទាំងអស់' : 'Please fill in all fields');
+      return;
+    }
+    setAddingSubject(true);
+    setErrorMessage(null);
+    try {
+      await api.adminAssignClassSubject(subjectClassId, subjectTeacherId, subjectName.trim());
+      await loadClassSubjects(subjectClassId);
+      setSubjectName('');
+      const t = teachers.find(t => t.id === subjectTeacherId);
+      const c = classes.find(c => c.id === subjectClassId);
+      setStatusMessage(isKm ? `បានចាត់តាំង ${t?.name || ''} បង្រៀន ${subjectName} ក្នុង ${c?.name || ''}` : 'Subject teacher assigned!');
+      setTimeout(() => setStatusMessage(null), 3000);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error');
+    } finally {
+      setAddingSubject(false);
+    }
+  };
+
+  const handleDeleteSubject = async (classId: number, subjectId: number) => {
+    try {
+      await api.adminDeleteClassSubject(classId, subjectId);
+      await loadClassSubjects(subjectClassId);
+      setStatusMessage(isKm ? 'បានដកការចាត់តាំងដោយជោគជ័យ' : 'Assignment removed');
+      setTimeout(() => setStatusMessage(null), 3000);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -301,7 +367,7 @@ export default function PermissionsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <Button
             onClick={() => setShowAddTeacherModal(true)}
             size="sm"
@@ -343,40 +409,190 @@ export default function PermissionsPage() {
         </div>
       )}
 
-      {/* Stats Summary Cards (Admin, Teacher, Total Classes) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <ShieldCheck size={22} weight="fill" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Admins'}</span>
-            <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalAdmins}</p>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <ChalkboardTeacher size={22} weight="fill" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'គ្រូបង្រៀន (Teachers)' : 'Teachers'}</span>
-            <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalTeachers}</p>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-            <IdentificationCard size={22} weight="fill" />
-          </div>
-          <div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'ថ្នាក់រៀនសរុប (Classes)' : 'Total Classes'}</span>
-            <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalClasses}</p>
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="flex gap-1 bg-slate-100 dark:bg-[#16171b] p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('staff')}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'staff'
+              ? 'bg-white dark:bg-[#1c1d22] text-blue-600 dark:text-blue-400 shadow-xs'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        >
+          <Users size={14} weight="bold" />
+          {isKm ? 'បុគ្គលិក & សិទ្ធិ' : 'Staff & Roles'}
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('subjects');
+            if (subjectClassId) loadClassSubjects(subjectClassId);
+          }}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'subjects'
+              ? 'bg-white dark:bg-[#1c1d22] text-purple-600 dark:text-purple-400 shadow-xs'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+          }`}
+        >
+          <BookOpen size={14} weight="bold" />
+          {isKm ? 'ចាត់តាំងមុខវិជ្ជា' : 'Assign Subjects'}
+        </button>
       </div>
 
-      {/* Filters & Search */}
+      {/* Stats Summary Cards - only show on staff tab */}
+      {activeTab === 'staff' && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <ShieldCheck size={22} weight="fill" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Admins'}</span>
+              <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalAdmins}</p>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <ChalkboardTeacher size={22} weight="fill" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'គ្រូបង្រៀន (Teachers)' : 'Teachers'}</span>
+              <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalTeachers}</p>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] shadow-xs flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <IdentificationCard size={22} weight="fill" />
+            </div>
+            <div>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{isKm ? 'ថ្នាក់រៀនសរុប (Classes)' : 'Total Classes'}</span>
+              <p className="text-lg font-black text-slate-900 dark:text-white leading-none mt-1">{stats.totalClasses}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ====== SUBJECT ASSIGNMENT TAB ====== */}
+      {activeTab === 'subjects' && (
+        <div className="space-y-4">
+          {/* Add Subject Form */}
+          <div className="bg-white dark:bg-[#1c1d22] border border-purple-200 dark:border-purple-900 rounded-2xl p-5 shadow-xs">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <BookOpen size={18} weight="fill" className="text-purple-600 dark:text-purple-400" />
+              {isKm ? 'ចាត់តាំងគ្រូបង្រៀនតាមមុខវិជ្ជា' : 'Assign Subject Teacher'}
+            </h3>
+            <form onSubmit={handleAddSubject} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {isKm ? 'ថ្នាក់រៀន:' : 'Class:'} *
+                </label>
+                <select
+                  value={subjectClassId}
+                  onChange={(e) => { setSubjectClassId(Number(e.target.value)); loadClassSubjects(Number(e.target.value)); }}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-white dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                >
+                  {classes.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.grade_level})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {isKm ? 'មុខវិជ្ជា:' : 'Subject:'} *
+                </label>
+                <select
+                  value={subjectName}
+                  onChange={(e) => setSubjectName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-white dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                >
+                  <option value="">{isKm ? '-- ជ្រើស --' : '-- Select --'}</option>
+                  {SUBJECT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {isKm ? 'គ្រូបង្រៀន:' : 'Teacher:'} *
+                </label>
+                <select
+                  value={subjectTeacherId}
+                  onChange={(e) => setSubjectTeacherId(Number(e.target.value))}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-white dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 cursor-pointer"
+                >
+                  {teachers.map((t: any) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <Button type="submit" disabled={addingSubject || !subjectName}
+                className="gap-1.5 text-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer py-2">
+                {addingSubject ? (isKm ? 'កំពុងចាត់...' : 'Assigning...') : (isKm ? 'ចាត់តាំង' : 'Assign')}
+              </Button>
+            </form>
+          </div>
+
+          {/* Subject Assignments Table */}
+          <div className="bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] rounded-2xl overflow-hidden shadow-xs">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-[#282a32] flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                {isKm ? `ការចាត់តាំងបច្ចុប្បន្ន - ${classes.find((c:any)=>c.id===subjectClassId)?.name || ''}` : `Current Assignments - ${classes.find((c:any)=>c.id===subjectClassId)?.name || ''}`}
+              </h4>
+              <span className="text-[10px] text-slate-400">{classSubjects.length} {isKm ? 'មុខវិជ្ជា' : 'subjects'}</span>
+            </div>
+            {subjectsLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400">{isKm ? 'កំពុងទាញ...' : 'Loading...'}</div>
+            ) : classSubjects.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400">
+                <BookOpen size={32} className="mx-auto mb-2 opacity-20" />
+                {isKm ? 'មិនទាន់មានការចាត់តាំងក្នុងថ្នាក់នេះ' : 'No subject assignments for this class yet.'}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-100 dark:border-[#282a32]">
+                    <TableHead>{isKm ? 'មុខវិជ្ជា' : 'Subject'}</TableHead>
+                    <TableHead>{isKm ? 'គ្រូបង្រៀន' : 'Teacher'}</TableHead>
+                    <TableHead>{isKm ? 'អ៊ីមែលគ្រូ' : 'Teacher Email'}</TableHead>
+                    <TableHead className="text-right">{isKm ? 'សកម្មភាព' : 'Action'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {classSubjects.map((s: any) => (
+                    <TableRow key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16171b] border-slate-100 dark:border-[#282a32]">
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                          <BookOpen size={12} weight="fill" />
+                          {s.subject_name}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 text-xs font-bold flex items-center justify-center">
+                            {s.teacher_name?.slice(0,1) || 'T'}
+                          </div>
+                          <span className="text-xs font-medium text-slate-800 dark:text-white">{s.teacher_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-slate-500 dark:text-slate-400">{s.teacher_email}</TableCell>
+                      <TableCell className="text-right">
+                        <button
+                          onClick={() => handleDeleteSubject(subjectClassId, s.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 transition cursor-pointer"
+                        >
+                          <Trash size={12} weight="bold" />
+                          {isKm ? 'លុប' : 'Remove'}
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ====== STAFF TAB ====== */}
+      {activeTab === 'staff' && (<>
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#1c1d22] p-4 rounded-2xl border border-slate-200/80 dark:border-[#282a32] shadow-xs">
         <div className="relative w-full sm:w-80">
           <MagnifyingGlass size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -385,34 +601,91 @@ export default function PermissionsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isKm ? 'ស្វែងរកតាមឈ្មោះ អ៊ីមែល ឬលេខទូរស័ព្ទ...' : 'Search by name, email, phone...'}
-            className="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-slate-50 dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full pl-9 pr-4 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-slate-50 dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium shrink-0">
             {isKm ? 'ចម្រាញ់តាមតួនាទី:' : 'Filter Role:'}
           </span>
           <select
             value={selectedRoleFilter}
             onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            className="w-full sm:w-auto px-3.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-slate-50 dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            className="w-full sm:w-auto px-3.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-slate-50 dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer font-semibold"
           >
             <option value="all">{isKm ? 'ទាំងអស់ (Admin & គ្រូ)' : 'All (Admin & Teachers)'}</option>
             <option value="admin">{isKm ? 'Admin (អ្នកគ្រប់គ្រង)' : 'Admins'}</option>
             <option value="teacher">{isKm ? 'គ្រូបង្រៀន (Teachers)' : 'Teachers'}</option>
           </select>
+          <ViewModeToggle />
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-5 shadow-xs">
-        {filteredUsers.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <Users size={36} className="mx-auto mb-2 opacity-30" />
-            <p className="text-xs">{isKm ? 'រកមិនឃើញអ្នកគ្រប់គ្រង ឬគ្រូបង្រៀនឡើយ' : 'No admins or teachers found matching filters'}</p>
-          </div>
-        ) : (
+      {/* Users Table or Grid */}
+      {filteredUsers.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-12 text-center text-slate-400">
+          <Users size={36} className="mx-auto mb-2 opacity-30" />
+          <p className="text-xs">{isKm ? 'រកមិនឃើញអ្នកគ្រប់គ្រង ឬគ្រូបង្រៀនឡើយ' : 'No admins or teachers found matching filters'}</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredUsers.map((u) => (
+            <div
+              key={u.id}
+              className="relative rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-4 shadow-xs flex flex-col justify-between hover:shadow-md hover:border-blue-500/50 transition group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  {renderRoleBadge(u.role)}
+                  <button
+                    onClick={() => handleOpenRoleModal(u)}
+                    className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-bold transition cursor-pointer"
+                    title={isKm ? 'ប្ដូរសិទ្ធិ' : 'Change Role'}
+                  >
+                    <Swap size={15} weight="bold" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md">
+                    {u.name ? u.name.slice(0, 2).toUpperCase() : 'U'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-xs text-slate-900 dark:text-white truncate">{u.name}</h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">{u.email}</p>
+                  </div>
+                </div>
+
+                <div className="py-2 border-t border-slate-100 dark:border-white/[0.06] text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                  <div>
+                    <span className="text-slate-400">{isKm ? 'ការទទួលបន្ទុក៖' : 'Scope:'} </span>
+                    {u.role === 'teacher' ? (
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{u.taught_classes_count || 0} {isKm ? 'ថ្នាក់' : 'Classes'}</span>
+                    ) : (
+                      <span className="font-bold text-amber-500">{isKm ? 'គ្រប់គ្រងពេញ' : 'Full Admin'}</span>
+                    )}
+                  </div>
+                  {u.phone && (
+                    <div className="text-[11px] text-slate-400">{isKm ? 'ទូរស័ព្ទ៖' : 'Phone:'} {u.phone}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-end">
+                <button
+                  onClick={() => handleOpenRoleModal(u)}
+                  className="w-full py-1.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Swap size={13} weight="bold" />
+                  <span>{isKm ? 'ប្ដូរសិទ្ធិ & តួនាទី' : 'Modify Role'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-5 shadow-xs overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-slate-100 dark:border-[#282a32]">
@@ -471,8 +744,9 @@ export default function PermissionsPage() {
               ))}
             </TableBody>
           </Table>
-        )}
-      </div>
+        </div>
+      )}
+      </>)}
 
       {/* Modal: Change Role */}
       {selectedUser && (

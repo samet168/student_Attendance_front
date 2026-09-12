@@ -471,8 +471,11 @@ export default function StudentsPage() {
       if (stuRes.status === 'fulfilled' && Array.isArray(stuRes.value)) {
         const rawList = stuRes.value;
         const uniqueMap = new Map<number, StudentItem>();
-        rawList.forEach((s: StudentItem) => {
-          if (s && s.id && !uniqueMap.has(s.id)) {
+        rawList.forEach((s: StudentItem & { role?: string }) => {
+          // Strictly exclude teachers and admins — show only students
+          if (!s || !s.id) return;
+          if (s.role && s.role !== 'student') return;
+          if (!uniqueMap.has(s.id)) {
             uniqueMap.set(s.id, s);
           }
         });

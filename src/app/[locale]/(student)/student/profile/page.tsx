@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/use-auth-store';
 import {
   UserCircle, EnvelopeSimple, Phone, IdentificationCard,
-  PencilSimple, CheckCircle, SpinnerGap, X, Camera
+  PencilSimple, CheckCircle, SpinnerGap, X, Camera, GraduationCap
 } from '@phosphor-icons/react';
 import { StudentIdCard } from '@/components/student/student-id-card';
 
@@ -20,10 +20,12 @@ export default function StudentProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
 
-  // Edit fields
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,26 @@ export default function StudentProfilePage() {
     setEditName(profile?.name || '');
     setEditPhone(profile?.phone || '');
     setEditAvatar(profile?.avatar_url || '');
+    setAvatarFile(null);
+    setAvatarPreview(profile?.avatar_url || '');
     setEditing(true);
+    setError(null);
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Validate type and size (max 5MB)
+    if (!file.type.startsWith('image/')) {
+      setError(isKm ? 'សូមជ្រើសឯកសាររូបភាពប៉ុណ្ណោះ' : 'Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(isKm ? 'រូបភាពធំពេក (max 5MB)' : 'Image too large (max 5MB)');
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
     setError(null);
   };
 
@@ -55,14 +76,33 @@ export default function StudentProfilePage() {
     setSaving(true);
     setError(null);
     try {
+      let finalAvatarUrl = editAvatar;
+
+      // Upload new avatar to Cloudinary if a file was selected
+      if (avatarFile) {
+        setUploadingAvatar(true);
+        try {
+          const res = await api.uploadFile(avatarFile);
+          finalAvatarUrl = res.file_url;
+        } catch {
+          setError(isKm ? 'បរាជ័យក្នុងការ Upload រូបភាព' : 'Failed to upload avatar');
+          setSaving(false);
+          setUploadingAvatar(false);
+          return;
+        } finally {
+          setUploadingAvatar(false);
+        }
+      }
+
       const updated = await api.updateProfile({
         name: editName.trim(),
         phone: editPhone.trim() || undefined,
-        avatar_url: editAvatar.trim() || undefined,
+        avatar_url: finalAvatarUrl || undefined,
       });
       setProfile(updated);
       setUser(updated);
       setEditing(false);
+      setAvatarFile(null);
       setSuccessMsg(isKm ? 'បានកែប្រែព័ត៌មានដោយជោគជ័យ!' : 'Profile updated successfully!');
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err: any) {
@@ -78,51 +118,79 @@ export default function StudentProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <SpinnerGap size={32} className="animate-spin text-violet-600" />
+        <SpinnerGap size={32} className="animate-spin text-violet-500" />
       </div>
     );
   }
 
+  const infoFields = [
+    { icon: UserCircle, label: isKm ? 'ឈ្មោះ' : 'Full Name', value: name, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+    { icon: EnvelopeSimple, label: isKm ? 'អ៊ីមែល' : 'Email', value: profile?.email || '—', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+    { icon: Phone, label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone', value: profile?.phone || (isKm ? 'មិនទាន់បញ្ចូល' : 'Not set'), color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    { icon: IdentificationCard, label: isKm ? 'អត្តលេខសិស្ស' : 'Student ID', value: profile?.student_code || '—', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+  ];
+
   return (
     <div className="space-y-5 max-w-xl mx-auto">
       {/* Profile Hero */}
-      <div className="bg-gradient-to-br from-violet-700 to-indigo-700 rounded-3xl p-6 text-white shadow-xl shadow-violet-900/20 flex flex-col items-center text-center">
+      <div
+        className="relative overflow-hidden rounded-3xl p-6 text-white shadow-2xl flex flex-col items-center text-center"
+        style={{
+          background: 'linear-gradient(135deg, #6d28d9 0%, #4f46e5 60%, #7c3aed 100%)',
+          boxShadow: '0 20px 40px -12px rgba(109,40,217,0.4)',
+        }}
+      >
+        {/* decorative */}
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10 -translate-y-1/3 translate-x-1/4"
+          style={{ background: 'radial-gradient(circle, #fff 0%, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10 translate-y-1/3 -translate-x-1/4"
+          style={{ background: 'radial-gradient(circle, #c4b5fd 0%, transparent 70%)' }} />
+
         {/* Avatar */}
-        <div className="relative mb-4">
+        <div className="relative mb-4 z-10">
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt={name} className="w-20 h-20 rounded-full object-cover ring-4 ring-white/30 shadow-lg" />
+            <img src={profile.avatar_url} alt={name} className="w-24 h-24 rounded-3xl object-cover shadow-2xl" style={{ border: '2px solid rgba(255,255,255,0.25)' }} />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center text-2xl font-black text-white shadow-lg">
+            <div
+              className="w-24 h-24 rounded-3xl flex items-center justify-center text-3xl font-black text-white shadow-2xl"
+              style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', border: '2px solid rgba(255,255,255,0.2)' }}
+            >
               {initials}
             </div>
           )}
           <button
             onClick={openEdit}
-            className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white text-violet-600 flex items-center justify-center shadow-lg hover:bg-violet-50 transition cursor-pointer"
+            className="absolute -bottom-1.5 -right-1.5 w-8 h-8 rounded-xl bg-white text-violet-600 flex items-center justify-center shadow-lg hover:bg-violet-50 transition cursor-pointer"
           >
-            <Camera size={13} weight="bold" />
+            <Camera size={14} weight="bold" />
           </button>
         </div>
-        <h1 className="text-xl font-extrabold">{name}</h1>
-        <p className="text-sm text-violet-200 mt-0.5">
-          {profile?.student_code ? `#${profile.student_code}` : (isKm ? 'សិស្ស' : 'Student')}
-        </p>
-        <span className="mt-2 px-3 py-0.5 bg-white/20 rounded-full text-xs font-semibold">
-          {isKm ? 'គណនីសិស្ស' : 'Student Account'}
-        </span>
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold mb-2"
+            style={{ background: 'rgba(255,255,255,0.15)' }}>
+            <GraduationCap size={12} weight="fill" />
+            {isKm ? 'គណនីសិស្ស' : 'Student Account'}
+          </div>
+          <h1 className="text-2xl font-extrabold">{name}</h1>
+          <p className="text-sm text-violet-200 mt-0.5">
+            {profile?.student_code ? `#${profile.student_code}` : (isKm ? 'សិស្ស' : 'Student')}
+          </p>
+        </div>
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
-          <CheckCircle size={16} weight="fill" className="text-emerald-600 shrink-0" /> {successMsg}
+        <div className="p-3.5 rounded-2xl border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2"
+          style={{ background: 'rgba(16,185,129,0.08)' }}>
+          <CheckCircle size={16} weight="fill" className="text-emerald-500 shrink-0" /> {successMsg}
         </div>
       )}
 
       {/* Digital Student ID Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs">
-        <h2 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-          <IdentificationCard size={18} className="text-violet-600 dark:text-violet-400" />
-          <span>{isKm ? 'កាតសិស្សឌីជីថល (Digital ID Card)' : 'Digital Student ID Card'}</span>
+      <div className="rounded-3xl p-5 border border-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <IdentificationCard size={16} className="text-violet-400" />
+          <span>{isKm ? 'កាតសិស្សឌីជីថល' : 'Digital Student ID Card'}</span>
         </h2>
         {profile && (
           <StudentIdCard
@@ -132,23 +200,22 @@ export default function StudentProfilePage() {
         )}
       </div>
 
-      {/* Info Cards */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
-        {[
-          { icon: UserCircle, label: isKm ? 'ឈ្មោះ' : 'Full Name', value: name, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/40' },
-          { icon: EnvelopeSimple, label: isKm ? 'អ៊ីមែល' : 'Email', value: profile?.email || '—', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/40' },
-          { icon: Phone, label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone', value: profile?.phone || (isKm ? 'មិនទាន់បញ្ចូល' : 'Not set'), color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
-          { icon: IdentificationCard, label: isKm ? 'អត្តលេខសិស្ស' : 'Student ID', value: profile?.student_code || '—', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/40' },
-        ].map((item) => {
+      {/* Info Fields */}
+      <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        {infoFields.map((item, idx) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className="flex items-center gap-4 px-4 py-3.5">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.bg}`}>
-                <Icon size={17} weight="bold" className={item.color} />
+            <div
+              key={item.label}
+              className="flex items-center gap-4 px-4 py-3.5 hover:bg-white/[0.02] transition"
+              style={{ borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined }}
+            >
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.bg} border ${item.border}`}>
+                <Icon size={16} weight="bold" className={item.color} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{item.label}</p>
-                <p className="text-xs font-semibold text-slate-800 dark:text-white mt-0.5 truncate">{item.value}</p>
+                <p className="text-[10px] text-slate-600 font-medium">{item.label}</p>
+                <p className="text-xs font-semibold text-slate-200 mt-0.5 truncate">{item.value}</p>
               </div>
             </div>
           );
@@ -158,7 +225,8 @@ export default function StudentProfilePage() {
       {/* Edit Button */}
       <button
         onClick={openEdit}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-lg shadow-violet-500/25 transition cursor-pointer"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-xs font-bold shadow-lg shadow-violet-900/40 transition hover:brightness-110 cursor-pointer"
+        style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}
       >
         <PencilSimple size={14} weight="bold" />
         {isKm ? 'កែប្រែព័ត៌មានផ្ទាល់ខ្លួន' : 'Edit Profile'}
@@ -166,57 +234,132 @@ export default function StudentProfilePage() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="relative bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
-            <button onClick={() => setEditing(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="relative rounded-3xl w-full max-w-md p-6 shadow-2xl border border-white/10"
+            style={{ background: '#12141f' }}
+          >
+            <button onClick={() => setEditing(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white cursor-pointer transition">
               <X size={18} />
             </button>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-2xl bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
                 <PencilSimple size={18} weight="bold" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">{isKm ? 'កែប្រែគណនី' : 'Edit Profile'}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{isKm ? 'ធ្វើបច្ចុប្បន្នភាពឈ្មោះ ទូរស័ព្ទ និង Avatar' : 'Update your name, phone and avatar'}</p>
+                <h3 className="text-sm font-bold text-white">{isKm ? 'កែប្រែគណនី' : 'Edit Profile'}</h3>
+                <p className="text-xs text-slate-500">{isKm ? 'ធ្វើបច្ចុប្បន្នភាពឈ្មោះ ទូរស័ព្ទ និង Avatar' : 'Update your name, phone and avatar'}</p>
               </div>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 text-xs">
+              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
+              {[
+                { label: isKm ? 'ឈ្មោះ' : 'Full Name', required: true, type: 'text', value: editName, onChange: (e: any) => setEditName(e.target.value), placeholder: '' },
+                { label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone Number', required: false, type: 'text', value: editPhone, onChange: (e: any) => setEditPhone(e.target.value), placeholder: '012 345 678' },
+              ].map((f) => (
+                <div key={f.label}>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">{f.label} {f.required && '*'}</label>
+                  <input
+                    type={f.type}
+                    required={f.required}
+                    value={f.value}
+                    onChange={f.onChange}
+                    placeholder={f.placeholder}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-white/8 text-white outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                  />
+                </div>
+              ))}
+
+              {/* Avatar Upload — file picker instead of URL */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{isKm ? 'ឈ្មោះ' : 'Full Name'} *</label>
-                <input type="text" required value={editName} onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{isKm ? 'លេខទូរស័ព្ទ' : 'Phone Number'}</label>
-                <input type="text" value={editPhone} onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="012 345 678"
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{isKm ? 'URL រូបភាព Avatar' : 'Avatar Image URL'}</label>
-                <input type="url" value={editAvatar} onChange={(e) => setEditAvatar(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500" />
-                {editAvatar && (
-                  <img src={editAvatar} alt="preview" className="mt-2 w-12 h-12 rounded-full object-cover border-2 border-violet-200 shadow-sm" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                  {isKm ? 'រូបភាព Avatar' : 'Profile Picture'}
+                </label>
+
+                {/* Current / Preview */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden border border-violet-500/30 flex-shrink-0">
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-lg font-black text-white"
+                        style={{ background: 'rgba(124,58,237,0.3)' }}>
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[11px] text-slate-400 mb-1.5">
+                      {isKm ? 'JPG, PNG, WEBP — អតិបរមា 5MB' : 'JPG, PNG, WEBP — max 5MB'}
+                    </p>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-300 border border-violet-500/30 cursor-pointer hover:bg-violet-500/10 transition"
+                      style={{ background: 'rgba(124,58,237,0.08)' }}>
+                      <Camera size={13} weight="bold" />
+                      {uploadingAvatar
+                        ? (isKm ? 'កំពុង Upload...' : 'Uploading...')
+                        : avatarFile
+                          ? (isKm ? 'ប្ដូររូបភាព' : 'Change photo')
+                          : (isKm ? 'ជ្រើសរូបភាព' : 'Choose photo')}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={handleAvatarFileChange}
+                        disabled={uploadingAvatar || saving}
+                      />
+                    </label>
+                  </div>
+                  {avatarFile && (
+                    <button
+                      type="button"
+                      onClick={() => { setAvatarFile(null); setAvatarPreview(editAvatar); }}
+                      className="text-slate-600 hover:text-rose-400 transition cursor-pointer p-1"
+                      title={isKm ? 'លប់ចោលការជ្រើស' : 'Remove selection'}
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected file name indicator */}
+                {avatarFile && (
+                  <div className="px-3 py-2 rounded-xl text-[11px] text-violet-300 flex items-center gap-1.5"
+                    style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                    <CheckCircle size={12} weight="fill" className="text-violet-400 shrink-0" />
+                    <span className="truncate">{avatarFile.name}</span>
+                    <span className="text-slate-500 flex-shrink-0">
+                      ({(avatarFile.size / 1024).toFixed(0)} KB)
+                    </span>
+                  </div>
                 )}
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex gap-2 pt-2 border-t border-white/6">
                 <button type="button" onClick={() => setEditing(false)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer">
+                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-white/8 text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer">
                   {isKm ? 'បោះបង់' : 'Cancel'}
                 </button>
-                <button type="submit" disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-sm disabled:opacity-50 transition cursor-pointer">
-                  {saving ? (isKm ? 'កំពុងរក្សាទុក...' : 'Saving...') : (isKm ? 'រក្សាទុក' : 'Save Changes')}
+                <button type="submit" disabled={saving || uploadingAvatar}
+                  className="flex-1 py-2.5 rounded-xl text-white text-xs font-bold disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-1.5"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
+                  {(saving || uploadingAvatar) && <SpinnerGap size={13} className="animate-spin" />}
+                  {uploadingAvatar
+                    ? (isKm ? 'កំពុង Upload...' : 'Uploading...')
+                    : saving
+                      ? (isKm ? 'កំពុងរក្សាទុក...' : 'Saving...')
+                      : (isKm ? 'រក្សាទុក' : 'Save Changes')}
                 </button>
               </div>
             </form>

@@ -36,12 +36,12 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0f1117] text-slate-900 dark:text-zinc-100 transition-colors">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0d0e13] text-slate-900 dark:text-zinc-100 transition-colors">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-slate-50/60 dark:bg-[#0f1117]">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-slate-50/60 dark:bg-[#0d0e13]">
         <Header />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
           {children}

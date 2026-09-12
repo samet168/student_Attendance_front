@@ -6,10 +6,14 @@ import { useParams } from 'next/navigation';
 import {
   BookOpen, Plus, CalendarBlank, ArrowRight, CheckCircle,
   ChalkboardTeacher, FileText, X, UploadSimple, Trash,
-  WarningCircle, SpinnerGap, ListChecks, PencilSimple, FloppyDisk
+  WarningCircle, SpinnerGap, ListChecks, PencilSimple, FloppyDisk,
+  MagnifyingGlass, Funnel, FileArrowDown
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
+import { useUIStore } from '@/stores/use-ui-store';
+import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 
 interface HomeworkItem {
   id: number;
@@ -94,11 +98,13 @@ export default function HomeworkPage() {
   const params = useParams();
   const locale = (params?.locale as string) || 'km';
   const isKm = locale === 'km';
+  const { viewMode } = useUIStore();
 
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number>(0);
   const [homeworks, setHomeworks] = useState<HomeworkItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Create Homework Modal State
   const [showModal, setShowModal] = useState(false);
@@ -632,10 +638,10 @@ export default function HomeworkPage() {
         </div>
       )}
 
-      {/* Class selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] p-4 rounded-2xl shadow-xs">
+      {/* Class selector & Search & ViewMode Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-[#1c1d22] border border-slate-200/80 dark:border-[#282a32] p-4 rounded-2xl shadow-xs">
         <div className="flex items-center gap-3">
-          <ChalkboardTeacher size={20} className="text-blue-600 dark:text-blue-400" />
+          <ChalkboardTeacher size={20} className="text-blue-600 dark:text-blue-400 shrink-0" />
           <div>
             <span className="text-xs font-bold text-slate-900 dark:text-white">
               {isKm ? 'ជ្រើសរើសថ្នាក់រៀន:' : 'Select Class:'}
@@ -644,18 +650,33 @@ export default function HomeworkPage() {
               {isKm ? 'មើលកិច្ចការដែលបានដាក់ក្នុងថ្នាក់នេះ' : 'View tasks assigned to this classroom'}
             </p>
           </div>
+          <select
+            value={selectedClassId || ''}
+            onChange={(e) => setSelectedClassId(Number(e.target.value))}
+            className="px-3.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-white dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer font-semibold min-w-44"
+          >
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} {c.grade_level ? `(${c.grade_level})` : ''}
+              </option>
+            ))}
+          </select>
         </div>
-        <select
-          value={selectedClassId || ''}
-          onChange={(e) => setSelectedClassId(Number(e.target.value))}
-          className="px-3.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-[#282a32] bg-white dark:bg-[#16171b] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer min-w-56"
-        >
-          {classes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name} {c.grade_level ? `(${c.grade_level})` : ''}
-            </option>
-          ))}
-        </select>
+
+        <div className="flex items-center gap-2">
+          {/* Search bar */}
+          <div className="relative">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isKm ? 'ស្វែងរកកិច្ចការ...' : 'Search homework...'}
+              className="pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#14161d] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 w-44 sm:w-56"
+            />
+          </div>
+          <ViewModeToggle />
+        </div>
       </div>
 
       {/* Homework list */}
@@ -682,96 +703,175 @@ export default function HomeworkPage() {
             <span>{isKm ? 'ដាក់កិច្ចការថ្មី' : 'Create Assignment'}</span>
           </Button>
         </div>
+      ) : viewMode === 'table' ? (
+        <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] overflow-hidden shadow-xs">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-slate-100 dark:border-[#282a32]">
+                <TableHead className="w-32">{isKm ? 'មុខវិជ្ជា' : 'Subject'}</TableHead>
+                <TableHead>{isKm ? 'ចំណងជើងកិច្ចការ' : 'Title'}</TableHead>
+                <TableHead className="w-36">{isKm ? 'ប្រភេទ/ឯកសារ' : 'Type/File'}</TableHead>
+                <TableHead className="w-36">{isKm ? 'កាលបរិច្ឆេទកំណត់' : 'Deadline'}</TableHead>
+                <TableHead className="text-center w-28">{isKm ? 'បានប្រគល់' : 'Turned In'}</TableHead>
+                <TableHead className="text-right w-36">{isKm ? 'សកម្មភាព' : 'Actions'}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {homeworks
+                .filter((hw) =>
+                  hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((hw) => {
+                  const count = hw.submissions_count ?? hw.submission_count ?? 0;
+                  return (
+                    <TableRow key={hw.id} className="hover:bg-slate-50/80 dark:hover:bg-[#16171b] border-slate-100 dark:border-[#282a32]">
+                      <TableCell>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          {hw.subject}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-bold text-xs text-slate-800 dark:text-white">
+                        <div>{hw.title}</div>
+                        {hw.description && <div className="text-[11px] text-slate-400 font-normal line-clamp-1 mt-0.5">{hw.description}</div>}
+                      </TableCell>
+                      <TableCell>
+                        {hw.is_qcm ? (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 inline-flex items-center gap-1">
+                            <ListChecks size={12} />
+                            QCM ({hw.question_count || 0})
+                          </span>
+                        ) : hw.file_url ? (
+                          <a href={hw.file_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                            <FileText size={13} />
+                            <span>{hw.file_name || 'File'}</span>
+                          </a>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-slate-500 font-mono">
+                        {new Date(hw.deadline).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${count > 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                          {count}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/${locale}/homework/${hw.id}`} className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-xs font-semibold">
+                            <ArrowRight size={15} />
+                          </Link>
+                          <button onClick={() => handleOpenEdit(hw)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
+                            <PencilSimple size={14} />
+                          </button>
+                          <button onClick={() => handleDeleteHomework(hw.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {homeworks.map((hw) => {
-            const count = hw.submissions_count ?? hw.submission_count ?? 0;
-            return (
-              <div
-                key={hw.id}
-                className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-5 shadow-xs flex flex-col justify-between hover:shadow-md hover:border-blue-500/50 transition group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        {hw.subject}
-                      </span>
-                      {hw.is_qcm && (
-                        <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 flex items-center gap-1">
-                          <ListChecks size={11} weight="bold" />
-                          QCM
+          {homeworks
+            .filter((hw) =>
+              hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              hw.subject.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((hw) => {
+              const count = hw.submissions_count ?? hw.submission_count ?? 0;
+              return (
+                <div
+                  key={hw.id}
+                  className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] p-5 shadow-xs flex flex-col justify-between hover:shadow-md hover:border-blue-500/50 transition group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          {hw.subject}
                         </span>
-                      )}
+                        {hw.is_qcm && (
+                          <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 flex items-center gap-1">
+                            <ListChecks size={11} weight="bold" />
+                            QCM
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1 mr-1">
+                          <CalendarBlank size={13} />
+                          {new Date(hw.deadline).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => handleOpenEdit(hw)}
+                          className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
+                          title={isKm ? 'កែប្រែកិច្ចការ' : 'Edit Homework'}
+                        >
+                          <PencilSimple size={14} weight="bold" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHomework(hw.id)}
+                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                          title={isKm ? 'លុបកិច្ចការ' : 'Delete'}
+                        >
+                          <Trash size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1 mr-1">
-                        <CalendarBlank size={13} />
-                        {new Date(hw.deadline).toLocaleDateString()}
+
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">
+                      {hw.title}
+                    </h3>
+
+                    {hw.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">
+                        {hw.description}
+                      </p>
+                    )}
+
+                    {hw.is_qcm ? (
+                      <span className="mt-2 inline-flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400">
+                        <ListChecks size={13} />
+                        {hw.question_count ?? 0} {isKm ? 'សំណួរ' : 'questions'}
                       </span>
-                      <button
-                        onClick={() => handleOpenEdit(hw)}
-                        className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
-                        title={isKm ? 'កែប្រែកិច្ចការ' : 'Edit Homework'}
+                    ) : hw.file_url ? (
+                      <a
+                        href={hw.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
                       >
-                        <PencilSimple size={14} weight="bold" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHomework(hw.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                        title={isKm ? 'លុបកិច្ចការ' : 'Delete'}
-                      >
-                        <Trash size={14} />
-                      </button>
+                        <FileText size={13} />
+                        {hw.file_name || (isKm ? 'ឯកសារភ្ជាប់' : 'Attached Material')}
+                      </a>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#282a32] flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                      <CheckCircle size={15} className={count > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
+                      <span className={count > 0 ? 'font-bold text-emerald-700 dark:text-emerald-400' : ''}>
+                        {count} {isKm ? 'បានប្រគល់' : 'Turned In'}
+                      </span>
                     </div>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition leading-snug">
-                    {hw.title}
-                  </h3>
-
-                  {hw.description && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">
-                      {hw.description}
-                    </p>
-                  )}
-
-                  {hw.is_qcm ? (
-                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400">
-                      <ListChecks size={13} />
-                      {hw.question_count ?? 0} {isKm ? 'សំណួរ' : 'questions'}
-                    </span>
-                  ) : hw.file_url ? (
-                    <a
-                      href={hw.file_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                    <Link
+                      href={`/${locale}/homework/${hw.id}`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 group-hover:translate-x-0.5 transition"
                     >
-                      <FileText size={13} />
-                      {hw.file_name || (isKm ? 'ឯកសារភ្ជាប់' : 'Attached Material')}
-                    </a>
-                  ) : null}
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#282a32] flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                    <CheckCircle size={15} className={count > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'} />
-                    <span className={count > 0 ? 'font-bold text-emerald-700 dark:text-emerald-400' : ''}>
-                      {count} {isKm ? 'បានប្រគល់' : 'Turned In'}
-                    </span>
+                      <span>{isKm ? 'ពិនិត្យ & ដាក់ពិន្ទុ' : 'Review Submissions'}</span>
+                      <ArrowRight size={14} />
+                    </Link>
                   </div>
-                  <Link
-                    href={`/${locale}/homework/${hw.id}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 group-hover:translate-x-0.5 transition"
-                  >
-                    <span>{isKm ? 'ពិនិត្យ & ដាក់ពិន្ទុ' : 'Review Submissions'}</span>
-                    <ArrowRight size={14} />
-                  </Link>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
 
