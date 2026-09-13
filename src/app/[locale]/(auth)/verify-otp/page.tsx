@@ -23,11 +23,9 @@ function VerifyOtpForm() {
   const isKm = locale === 'km';
 
   const emailParam = searchParams.get('email') || '';
-  const devOtpParam = searchParams.get('dev_otp') || null;
 
   const { setAuth } = useAuthStore();
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [devOtp, setDevOtp] = useState<string | null>(devOtpParam);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendMsg, setResendMsg] = useState<string | null>(null);
@@ -259,28 +257,6 @@ function VerifyOtpForm() {
                 <span>{emailParam || 'user@school.edu.kh'}</span>
               </div>
             </div>
-
-            {/* Dev OTP Helper Banner */}
-            {devOtp && (
-              <div className="p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between animate-in fade-in">
-                <div>
-                  <span className="font-semibold block text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                    {isKm ? 'លេខកូដ OTP (Brevo / Email)' : 'OTP Code (Email Dispatch)'}
-                  </span>
-                  <span className="text-base font-mono font-bold tracking-widest text-blue-700 dark:text-blue-300">{devOtp}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const digits = devOtp.slice(0, 6).split('');
-                    setOtp(digits);
-                  }}
-                  className="px-3 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-xl text-xs font-bold cursor-pointer shadow hover:opacity-90 transition"
-                >
-                  {isKm ? 'បំពេញកូដ' : 'Fill Code'}
-                </button>
-              </div>
-            )}
 
             {/* Error Message */}
             {error && (
