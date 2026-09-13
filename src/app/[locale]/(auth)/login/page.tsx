@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
-import { getApiBaseUrl } from '@/lib/api';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function LoginPage() {
     try {
       const apiBase = getApiBaseUrl();
       if (authMethod === 'otp') {
-        const res = await fetch(`${apiBase}/auth/request-otp`, {
+        const res = await fetch(`${API_BASE}/auth/request-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -49,12 +50,15 @@ export default function LoginPage() {
           throw new Error(errData.detail || (isKm ? 'អ៊ីមែលនេះមិនទាន់បានចុះឈ្មោះក្នុងប្រព័ន្ធទេ' : 'Email not registered.'));
         }
 
-        router.push(`/${locale}/verify-otp?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+        const data = await res.json();
+        // dev_otp returned when SMTP not configured — pass to verify page for auto-fill
+        const devOtp = data.dev_otp ? `&dev_otp=${encodeURIComponent(data.dev_otp)}` : '';
+        router.push(`/${locale}/verify-otp?email=${encodeURIComponent(email.trim().toLowerCase())}${devOtp}`);
         return;
       }
 
-      // Password login endpoint
-      const res = await fetch(`${apiBase}/auth/login`, {
+      // Password login
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
