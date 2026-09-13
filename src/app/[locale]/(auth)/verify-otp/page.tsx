@@ -78,11 +78,6 @@ function VerifyOtpForm() {
         throw new Error(errData.detail || (isKm ? 'ការផ្ញើកូដបរាជ័យ' : 'Failed to resend code'));
       }
 
-      const resData = await res.json().catch(() => ({}));
-      if (resData.dev_otp) {
-        setDevOtp(resData.dev_otp);
-      }
-
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
       setCooldown(RESEND_COOLDOWN);
