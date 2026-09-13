@@ -150,7 +150,7 @@ function VerifyOtpForm() {
         <LanguageSwitcher />
       </header>
 
-      {/* Main Container — mobile-first single column card, split panel on lg+ */}
+      {/* Main Container */}
       <div className="w-full max-w-md lg:max-w-5xl grid grid-cols-1 lg:grid-cols-12 rounded-3xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl shadow-neutral-900/[0.06] dark:shadow-black/50 z-20">
 
         {/* Left Side: Visual Showcase */}
@@ -223,7 +223,7 @@ function VerifyOtpForm() {
         <div className="lg:col-span-7 p-5 sm:p-6 lg:p-10 flex flex-col justify-center bg-white dark:bg-neutral-900">
           <div className="max-w-md w-full mx-auto space-y-6">
 
-            {/* Mobile brand header — desktop: hidden */}
+            {/* Mobile brand header */}
             <div className="flex items-center gap-3 mb-6 lg:hidden">
               <div className="w-11 h-11 rounded-2xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 flex items-center justify-center shadow-md shrink-0">
                 <GraduationCap size={26} weight="fill" />
@@ -360,7 +360,7 @@ export default function VerifyOtpPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
         <div className="text-xs text-neutral-500 dark:text-neutral-400 animate-pulse">
-          {String.fromCharCode(76, 111, 97, 100, 105, 110, 103, 46, 46, 46)}
+          Loading...
         </div>
       </div>
     }>
