@@ -86,13 +86,6 @@ export default function LoginPage() {
   const handleSelectRole = (roleKey: 'admin' | 'teacher' | 'student') => {
     setSelectedRole(roleKey);
     setError(null);
-    if (roleKey === 'admin') {
-      setEmail('teacher@school.edu.kh');
-    } else if (roleKey === 'teacher') {
-      setEmail('teacher@school.edu.kh');
-    } else if (roleKey === 'student') {
-      setEmail('student@school.edu.kh');
-    }
   };
 
   return (
