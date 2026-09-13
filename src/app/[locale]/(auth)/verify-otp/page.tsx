@@ -11,8 +11,7 @@ import { useAuthStore } from '@/stores/use-auth-store';
 import Link from 'next/link';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { getApiBaseUrl } from '@/lib/api';
 
 const RESEND_COOLDOWN = 30;
 
@@ -67,7 +66,8 @@ function VerifyOtpForm() {
     setResendMsg(null);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/auth/request-otp`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/auth/request-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailParam }),
@@ -108,7 +108,8 @@ function VerifyOtpForm() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+      const apiBase = getApiBaseUrl();
+      const res = await fetch(`${apiBase}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

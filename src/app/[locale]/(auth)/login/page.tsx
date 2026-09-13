@@ -12,8 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/use-auth-store';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { getApiBaseUrl } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,7 +38,7 @@ export default function LoginPage() {
     try {
       const apiBase = getApiBaseUrl();
       if (authMethod === 'otp') {
-        const res = await fetch(`${API_BASE}/auth/request-otp`, {
+        const res = await fetch(`${apiBase}/auth/request-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -58,7 +57,7 @@ export default function LoginPage() {
       }
 
       // Password login
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const res = await fetch(`${apiBase}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
