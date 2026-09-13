@@ -18,9 +18,6 @@ const kantumruy = Kantumruy_Pro({
 export const metadata: Metadata = {
   title: 'Smart School & Student Management System',
   description: 'Enterprise Student Information and Management System',
-  icons: {
-    icon: '/favicon.ico',
-  },
 };
 
 export function generateStaticParams() {
