@@ -1,16 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { Translate, Check, CaretDown } from '@phosphor-icons/react';
 import { useUIStore } from '@/stores/use-ui-store';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 
+const emptySubscribe = () => () => {};
+
+function useIsHydrated() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
 export const LanguageSwitcher: React.FC = () => {
   const [isOpen, setIsOpen] = React.useState(false);
+  const hydrated = useIsHydrated();
   const { language, setLanguage } = useUIStore();
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer border border-slate-200/60 dark:border-slate-700/60">
+        <Translate size={15} className="text-slate-400" />
+        <span className="hidden sm:inline">EN</span>
+      </div>
+    );
+  }
 
   const handleSelect = (lang: 'km' | 'en') => {
     setLanguage(lang);

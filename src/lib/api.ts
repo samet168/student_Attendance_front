@@ -1,12 +1,10 @@
+// Always use the environment variable.
+// For local dev: set NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+// For Render:    set NEXT_PUBLIC_API_URL=https://your-backend.onrender.com/api/v1
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    const host = window.location.hostname;
-    // If accessing via IP or non-localhost, point backend to that same host on port 8000
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return `http://${host}:8000/api/v1`;
-    }
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  return API_BASE;
 }
 
 export function getAuthToken(): string | null {
@@ -241,7 +239,7 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const apiBase = getApiBaseUrl();
+    const apiBase = API_BASE;
     const res = await fetch(`${apiBase}/homework/upload`, {
       method: 'POST',
       headers,
@@ -275,7 +273,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
-  getDownloadUrl: (notificationId: number) => `${getApiBaseUrl()}/notifications/${notificationId}/download`,
+  getDownloadUrl: (notificationId: number) => `${API_BASE}/notifications/${notificationId}/download`,
 
   // Billing
   getInvoices: () => request<any[]>('/billing/invoices'),

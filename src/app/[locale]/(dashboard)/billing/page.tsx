@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 
 interface InvoiceItem {
@@ -344,11 +345,17 @@ export default function BillingPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-xs text-slate-400">
-                  {isKm ? 'កំពុងទាញយកទិន្នន័យវិក្កយបត្រ...' : 'Loading invoices...'}
-                </TableCell>
-              </TableRow>
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="border-slate-100 dark:border-[#282a32]">
+                    {Array.from({ length: 8 }).map((_, c) => (
+                      <TableCell key={c} className="py-3.5">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </>
             ) : filteredInvoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-xs text-slate-400">

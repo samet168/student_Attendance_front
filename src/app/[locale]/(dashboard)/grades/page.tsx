@@ -8,6 +8,7 @@ import {
   MagnifyingGlass, ArrowsDownUp, CalendarBlank
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import { useUIStore } from '@/stores/use-ui-store';
@@ -440,7 +441,17 @@ export default function GradesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-10 text-xs text-slate-400">{isKm ? 'កំពុងទាញយក...' : 'Loading...'}</TableCell></TableRow>
+                <>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={i} className="border-slate-100 dark:border-[#282a32]">
+                      {Array.from({ length: 6 }).map((_, c) => (
+                        <TableCell key={c} className="py-3.5">
+                          <Skeleton className="h-4 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
               ) : gradesData.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-10 text-xs text-slate-400">{isKm ? 'មិនទាន់មានទិន្នន័យពិន្ទុ' : 'No grade records found.'}</TableCell></TableRow>
               ) : (

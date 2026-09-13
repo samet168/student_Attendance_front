@@ -4,9 +4,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import {
-  Exam, BookOpen, SpinnerGap, ArrowClockwise, LockSimple,
+  Exam, BookOpen, ArrowClockwise, LockSimple,
   Trophy, CalendarBlank, CaretDown, CaretUp, ChartBar,
+  DownloadSimple, FilePdf, Medal, CheckCircle, Student
 } from '@phosphor-icons/react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { SkeletonList } from '@/components/ui/skeleton';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -46,12 +50,21 @@ function letterGrade(score: number, max = 100) {
 }
 
 const LETTER_CONFIG: Record<string, { color: string; bg: string; border: string }> = {
-  A: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-  B: { color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20' },
-  C: { color: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20' },
-  D: { color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/20' },
-  E: { color: 'text-rose-400',    bg: 'bg-rose-500/10',    border: 'border-rose-500/20' },
-  F: { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20' },
+  A: { color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-500/20' },
+  B: { color: 'text-blue-700 dark:text-blue-400',       bg: 'bg-blue-50 dark:bg-blue-500/10',       border: 'border-blue-200 dark:border-blue-500/20' },
+  C: { color: 'text-amber-700 dark:text-amber-400',     bg: 'bg-amber-50 dark:bg-amber-500/10',     border: 'border-amber-200 dark:border-amber-500/20' },
+  D: { color: 'text-orange-700 dark:text-orange-400',   bg: 'bg-orange-50 dark:bg-orange-500/10',   border: 'border-orange-200 dark:border-orange-500/20' },
+  E: { color: 'text-rose-700 dark:text-rose-400',       bg: 'bg-rose-50 dark:bg-rose-500/10',       border: 'border-rose-200 dark:border-rose-500/20' },
+  F: { color: 'text-red-700 dark:text-red-400',         bg: 'bg-red-50 dark:bg-red-500/10',         border: 'border-red-200 dark:border-red-500/20' },
+};
+
+const LETTER_BRIGHT: Record<string, string> = {
+  A: 'text-emerald-300',
+  B: 'text-blue-300',
+  C: 'text-amber-300',
+  D: 'text-orange-300',
+  E: 'text-rose-300',
+  F: 'text-red-300',
 };
 
 const BAR_COLOR = (score: number) =>
@@ -76,7 +89,7 @@ export default function StudentGradesPage() {
   const [grades,   setGrades]   = useState<any[]>([]);
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading,  setLoading]  = useState(true);
-  const [activeTab, setActiveTab] = useState<'list' | 'subject'>('subject');
+  const [activeTab, setActiveTab] = useState<'subject' | 'list'>('subject');
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const load = async () => {
@@ -101,6 +114,85 @@ export default function StudentGradesPage() {
   const letter = letterGrade(avg);
   const rank   = dashboard?.grades_summary?.rank ?? '-';
   const gpa    = dashboard?.grades_summary?.gpa  ?? (avg / 25).toFixed(2);
+  const studentInfo = dashboard?.student || {};
+
+  const handleDownloadTranscriptPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header Title
+    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SMART SCHOOL MANAGEMENT SYSTEM', pageWidth / 2, 18, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('OFFICIAL ACADEMIC TRANSCRIPT & REPORT CARD', pageWidth / 2, 28, { align: 'center' });
+
+    // Student Information Block
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+
+    const startY = 48;
+    doc.text(`Student Name: ${studentInfo.full_name || studentInfo.name || 'Student'}`, 14, startY);
+    doc.text(`Student ID: ${studentInfo.student_code || studentInfo.student_id || '-'}`, 14, startY + 6);
+    doc.text(`Class: ${studentInfo.class_name || studentInfo.enrolled_class || '-'}`, 14, startY + 12);
+
+    doc.text(`Academic Year: 2025-2026`, pageWidth - 14, startY, { align: 'right' });
+    doc.text(`Cumulative GPA: ${gpa} (${letter})`, pageWidth - 14, startY + 6, { align: 'right' });
+    doc.text(`Class Rank: #${rank}`, pageWidth - 14, startY + 12, { align: 'right' });
+
+    // Table of Grades
+    const tableBody = grades.map((g, idx) => [
+      idx + 1,
+      g.subject || 'Subject',
+      g.exam_type || 'Monthly Exam',
+      g.date || '-',
+      g.score,
+      g.max_score || 100,
+      letterGrade(g.score, g.max_score || 100)
+    ]);
+
+    autoTable(doc, {
+      startY: startY + 20,
+      head: [['#', 'Subject', 'Examination', 'Date', 'Score', 'Max', 'Grade']],
+      body: tableBody,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [79, 70, 229], // Indigo
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 9,
+      },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: 4,
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+    });
+
+    // Summary at Bottom
+    const finalY = (doc as any).lastAutoTable.finalY + 12;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Generated on: ${new Date().toLocaleDateString('en-US')} - Validated by School Examination Office`, 14, finalY);
+
+    // Signature Area
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text('Academic Dean / Principal', pageWidth - 20, finalY + 20, { align: 'right' });
+    doc.line(pageWidth - 70, finalY + 18, pageWidth - 14, finalY + 18);
+
+    doc.save(`Academic_Transcript_${studentInfo.student_code || 'Report'}.pdf`);
+  };
 
   const groupedByMonth = useMemo(() => {
     const map: Record<string, any[]> = {};
@@ -130,8 +222,6 @@ export default function StudentGradesPage() {
 
   const toggleGroup = (k: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [k]: !prev[k] }));
-
-  const lc = LETTER_CONFIG[letter] || LETTER_CONFIG.F;
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
@@ -163,7 +253,7 @@ export default function StudentGradesPage() {
           </div>
           <div className="text-right shrink-0">
             <p className="text-4xl font-black text-white">{avg.toFixed(1)}</p>
-            <p className={`text-2xl font-black ${lc.color}`}>
+            <p className={`text-2xl font-black ${LETTER_BRIGHT[letter] || 'text-white'}`}>
               {isKm ? `និទ្ទេស ${letter}` : `Grade ${letter}`}
             </p>
             <p className="text-[11px] text-blue-300 mt-0.5">{isKm ? 'មធ្យមភាគ' : 'Average'}</p>
@@ -192,10 +282,7 @@ export default function StudentGradesPage() {
 
       {/* Tabs + Refresh */}
       <div className="flex items-center justify-between gap-2">
-        <div
-          className="flex items-center gap-1 p-1 rounded-xl border"
-          style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}
-        >
+        <div className="flex items-center gap-1 p-1 rounded-xl border bg-neutral-100 border-neutral-200 dark:bg-white/[0.03] dark:border-white/[0.06]">
           {[
             { key: 'subject', icon: ChartBar, label: isKm ? 'តាមមុខវិជ្ជា' : 'By Subject' },
             { key: 'list', icon: CalendarBlank, label: isKm ? 'រាយបញ្ជី' : 'By Date' },
@@ -209,7 +296,7 @@ export default function StudentGradesPage() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:text-slate-400 dark:hover:text-white'
                 }`}
               >
                 <Icon size={13} />
@@ -218,20 +305,27 @@ export default function StudentGradesPage() {
             );
           })}
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-white/5 text-slate-500 hover:text-blue-400 transition cursor-pointer"
-          style={{ background: 'rgba(255,255,255,0.03)' }}
-        >
-          <ArrowClockwise size={13} /> {isKm ? 'ធ្វើបច្ចុប្បន្នភាព' : 'Refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadTranscriptPDF}
+            disabled={grades.length === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-700 border border-blue-300 transition shadow-sm cursor-pointer disabled:opacity-40 dark:bg-blue-600/20 dark:hover:bg-blue-600/30 dark:text-blue-400 dark:border-blue-500/30"
+          >
+            <DownloadSimple size={13} weight="bold" />
+            <FilePdf size={13} weight="fill" className="text-rose-400" />
+            <span>{isKm ? 'ទាញយកព្រឹត្តិបត្រពិន្ទុ (PDF)' : 'Download Transcript'}</span>
+          </button>
+          <button
+            onClick={load}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-neutral-200 text-neutral-600 hover:text-blue-600 hover:border-blue-300 transition cursor-pointer dark:border-white/5 dark:text-slate-500 dark:hover:text-blue-400 dark:bg-white/[0.03]"
+          >
+            <ArrowClockwise size={13} /> {isKm ? 'ធ្វើបច្ចុប្បន្នភាព' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <SpinnerGap size={28} className="animate-spin text-blue-500 mb-2" />
-          <p className="text-xs">{isKm ? 'កំពុងផ្ទុកពិន្ទុ...' : 'Loading grades...'}</p>
-        </div>
+        <SkeletonList count={5} withAvatar={false} />
       ) : grades.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Exam size={36} className="mb-2 opacity-20" />
@@ -250,19 +344,18 @@ export default function StudentGradesPage() {
             return (
               <div
                 key={subject}
-                className="rounded-2xl overflow-hidden border"
-                style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}
+                className="rounded-2xl overflow-hidden border bg-white border-neutral-200 dark:bg-white/[0.02] dark:border-white/[0.06]"
               >
                 <button
                   onClick={() => toggleGroup(subject)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.02] transition cursor-pointer"
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md shrink-0`}>
                       <BookOpen size={15} weight="bold" className="text-white" />
                     </div>
                     <div className="text-left">
-                      <p className="text-xs font-bold text-white">{subject}</p>
+                      <p className="text-xs font-bold text-neutral-900 dark:text-white">{subject}</p>
                       <p className="text-[10px] text-slate-500">
                         {count} {isKm ? 'ការប្រឡង' : 'exams'} • {isKm ? 'មធ្យម' : 'avg'}: {sAvg.toFixed(1)}
                       </p>
@@ -272,7 +365,7 @@ export default function StudentGradesPage() {
                     <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg border ${slc.color} ${slc.bg} ${slc.border}`}>
                       {sl}
                     </span>
-                    <span className="text-xs font-black text-blue-400 w-10 text-right">
+                    <span className="text-xs font-black text-blue-600 dark:text-blue-400 w-10 text-right">
                       {sAvg.toFixed(1)}
                     </span>
                     {isCollapsed ? <CaretDown size={12} className="text-slate-500" /> : <CaretUp size={12} className="text-slate-500" />}
@@ -280,7 +373,7 @@ export default function StudentGradesPage() {
                 </button>
 
                 {/* Progress bar */}
-                <div className="h-0.5 bg-white/5">
+                <div className="h-0.5 bg-slate-100 dark:bg-white/5">
                   <div className={`h-full ${BAR_COLOR(sAvg)} transition-all duration-700`} style={{ width: `${pct}%` }} />
                 </div>
 
@@ -294,11 +387,10 @@ export default function StudentGradesPage() {
                       return (
                         <div
                           key={exam.id}
-                          className="px-4 py-3 flex items-center justify-between"
-                          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                          className="px-4 py-3 flex items-center justify-between border-t border-neutral-100 dark:border-white/[0.04]"
                         >
                           <div>
-                            <p className="text-xs font-semibold text-slate-300">
+                            <p className="text-xs font-semibold text-neutral-800 dark:text-slate-300">
                               {exam.exam_type || (isKm ? 'ការប្រឡង' : 'Exam')}
                             </p>
                             <div className="flex items-center gap-1.5 mt-0.5">
@@ -309,10 +401,10 @@ export default function StudentGradesPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-16 bg-white/5 rounded-full h-1.5 overflow-hidden">
+                            <div className="w-16 bg-slate-100 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
                               <div className={`h-full rounded-full ${BAR_COLOR(exam.score)} transition-all`} style={{ width: `${ep}%` }} />
                             </div>
-                            <span className="text-xs font-black text-white w-8 text-right">{exam.score}</span>
+                            <span className="text-xs font-black text-neutral-900 dark:text-white w-8 text-right">{exam.score}</span>
                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border ${elc.color} ${elc.bg} ${elc.border}`}>
                               {el}
                             </span>
@@ -337,22 +429,21 @@ export default function StudentGradesPage() {
             return (
               <div
                 key={mk}
-                className="rounded-2xl overflow-hidden border"
-                style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}
+                className="rounded-2xl overflow-hidden border bg-white border-neutral-200 dark:bg-white/[0.02] dark:border-white/[0.06]"
               >
                 <button
                   onClick={() => toggleGroup(mk)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition cursor-pointer"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <CalendarBlank size={13} className="text-blue-400" />
-                    <span className="text-xs font-bold text-white">{mk}</span>
+                    <span className="text-xs font-bold text-neutral-900 dark:text-white">{mk}</span>
                     <span className="text-[10px] text-slate-500">
                       {items.length} {isKm ? 'ការប្រឡង' : 'exams'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-blue-400">
+                    <span className="text-xs font-black text-blue-600 dark:text-blue-400">
                       {isKm ? 'មធ្យម: ' : 'avg: '}{mAvg.toFixed(1)}
                     </span>
                     <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border ${mlc.color} ${mlc.bg} ${mlc.border}`}>
@@ -371,16 +462,15 @@ export default function StudentGradesPage() {
                       return (
                         <div
                           key={item.id}
-                          className="px-4 py-3.5 space-y-2"
-                          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+                          className="px-4 py-3.5 space-y-2 border-t border-neutral-100 dark:border-white/[0.04]"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                              <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400">
                                 <BookOpen size={14} weight="bold" />
                               </div>
                               <div className="min-w-0">
-                                <h4 className="text-xs font-bold text-white truncate">{item.subject}</h4>
+                                <h4 className="text-xs font-bold text-neutral-900 dark:text-white truncate">{item.subject}</h4>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <CalendarBlank size={10} className="text-slate-600 flex-shrink-0" />
                                   <p className="text-[10px] text-slate-500">
@@ -395,7 +485,7 @@ export default function StudentGradesPage() {
                             </div>
                             <div className="text-right shrink-0">
                               <div className="flex items-baseline gap-1 justify-end">
-                                <span className="text-sm font-extrabold text-blue-400">{item.score}</span>
+                                <span className="text-sm font-extrabold text-blue-600 dark:text-blue-400">{item.score}</span>
                                 <span className="text-[10px] text-slate-600">/ {item.max_score || 100}</span>
                               </div>
                               <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border ${glc.color} ${glc.bg} ${glc.border}`}>
@@ -403,7 +493,7 @@ export default function StudentGradesPage() {
                               </span>
                             </div>
                           </div>
-                          <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                          <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1 overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-700 ${BAR_COLOR(item.score)}`}
                               style={{ width: `${pct}%` }}

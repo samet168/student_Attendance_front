@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Kantumruy_Pro } from 'next/font/google';
+import Script from 'next/script';
 import '../globals.css';
 
 const inter = Inter({
@@ -36,9 +37,11 @@ export default async function LocaleLayout({
   const { locale } = await params;
 
   return (
-    <html lang={locale} className={`dark ${inter.variable} ${kantumruy.variable}`} suppressHydrationWarning>
+    <html lang={locale || 'km'} className={`dark ${inter.variable} ${kantumruy.variable}`} suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

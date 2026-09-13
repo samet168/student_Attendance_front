@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import {
-  CalendarCheck, CheckCircle, XCircle, Warning, SpinnerGap,
+  CalendarCheck, CheckCircle, XCircle, Warning,
   ArrowClockwise, LockSimple, CaretDown, CaretUp,
 } from '@phosphor-icons/react';
+import { SkeletonList } from '@/components/ui/skeleton';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -47,30 +48,30 @@ const STATUS_CONFIG = {
   present: {
     label: { km: 'វត្តមាន', en: 'Present' },
     icon: CheckCircle,
-    dot: 'bg-emerald-500',
-    badge: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    row: 'border-emerald-500/10',
+    dot: 'bg-cyan-500',
+    badge: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-300 dark:bg-cyan-500/10 dark:border-cyan-500/20',
+    row: 'border-cyan-500/30',
   },
   absent: {
     label: { km: 'អវត្តមាន', en: 'Absent' },
     icon: XCircle,
     dot: 'bg-rose-500',
-    badge: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-    row: 'border-rose-500/10',
+    badge: 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-300 dark:bg-rose-500/10 dark:border-rose-500/20',
+    row: 'border-rose-500/30',
   },
   late: {
     label: { km: 'មកយឺត', en: 'Late' },
     icon: Warning,
-    dot: 'bg-sky-500',
-    badge: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
-    row: 'border-sky-500/10',
+    dot: 'bg-amber-500',
+    badge: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20',
+    row: 'border-amber-500/30',
   },
   permission: {
     label: { km: 'ច្បាប់', en: 'Leave' },
     icon: Warning,
-    dot: 'bg-amber-500',
-    badge: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    row: 'border-amber-500/10',
+    dot: 'bg-violet-500',
+    badge: 'text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-300 dark:bg-violet-500/10 dark:border-violet-500/20',
+    row: 'border-violet-500/30',
   },
 } as const;
 
@@ -124,36 +125,47 @@ export default function StudentAttendancePage() {
   ] as const;
 
   return (
-    <div className="space-y-5 max-w-2xl mx-auto">
+    <div className="space-y-4 sm:space-y-5 max-w-2xl mx-auto">
 
       {/* Header Stats Card */}
       <div
-        className="rounded-3xl overflow-hidden text-white shadow-2xl"
+        className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-cyan-500/10"
         style={{
-          background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)',
-          boxShadow: '0 20px 40px -12px rgba(5,150,105,0.4)',
+          background: 'linear-gradient(135deg, #0c1115 0%, #0e1620 55%, #0a2b36 100%)',
+          boxShadow: '0 20px 40px -12px rgba(6,182,212,0.28)',
         }}
       >
+        {/* Brand glow */}
+        <div
+          className="absolute -top-16 -right-16 w-56 h-56 rounded-full opacity-25 blur-3xl pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #22d3ee 0%, transparent 70%)' }}
+        />
         {/* Top section */}
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="text-xs font-semibold text-emerald-200 mb-0.5 flex items-center gap-1.5">
+        <div className="relative p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4 sm:mb-5 gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs font-semibold text-cyan-300 mb-0.5 flex items-center gap-1.5">
                 <LockSimple size={11} weight="fill" />
-                {isKm ? 'ទិន្នន័យជំនួសរបស់អ្នក' : 'Your Private Data'}
+                <span className="truncate">{isKm ? 'ទិន្នន័យជំនួសរបស់អ្នក' : 'Your Private Data'}</span>
               </p>
-              <h1 className="text-xl font-extrabold">{isKm ? 'វត្តមានរបស់ខ្ញុំ' : 'My Attendance'}</h1>
-              <p className="text-[11px] text-emerald-200 mt-0.5">
+              <h1 className="text-lg sm:text-xl font-extrabold truncate">{isKm ? 'វត្តមានរបស់ខ្ញុំ' : 'My Attendance'}</h1>
+              <p className="text-[11px] text-slate-300 mt-0.5 truncate">
                 {isKm ? `ថ្ងៃសិក្សា ${total} ថ្ងៃ` : `${total} school days recorded`}
               </p>
             </div>
             {/* Circular progress */}
-            <div className="relative w-20 h-20 shrink-0">
+            <div className="relative w-[72px] h-[72px] sm:w-20 sm:h-20 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-                <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                <defs>
+                  <linearGradient id="brandArc" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#22d3ee" />
+                    <stop offset="100%" stopColor="#0284c7" />
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
                 <circle
                   cx="40" cy="40" r="32" fill="none"
-                  stroke="rgba(255,255,255,0.85)" strokeWidth="8"
+                  stroke="url(#brandArc)" strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 32}`}
                   strokeDashoffset={`${2 * Math.PI * 32 * (1 - rateNum / 100)}`}
@@ -161,25 +173,29 @@ export default function StudentAttendancePage() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-lg font-black text-white leading-none">{rate}%</p>
-                <p className="text-[8px] text-emerald-200 font-medium leading-none mt-0.5">{isKm ? 'វត្តមាន' : 'Rate'}</p>
+                <p className="text-base sm:text-lg font-black text-white leading-none">{rate}%</p>
+                <p className="text-[8px] text-slate-300 font-medium leading-none mt-0.5">{isKm ? 'វត្តមាន' : 'Rate'}</p>
               </div>
             </div>
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
             {[
-              { label: isKm ? 'វត្តមាន' : 'Present', value: presentCount, color: 'text-white', bg: 'bg-white/10' },
-              { label: isKm ? 'អវត្តមាន' : 'Absent',  value: absentCount, color: 'text-rose-300', bg: 'bg-rose-500/20' },
-              { label: isKm ? 'ច្បាប់' : 'Leave',     value: permissionCount, color: 'text-amber-300', bg: 'bg-amber-500/20' },
-              { label: isKm ? 'យឺត' : 'Late',          value: lateCount, color: 'text-sky-300', bg: 'bg-sky-500/20' },
-            ].map((s) => (
-              <div key={s.label} className={`text-center ${s.bg} rounded-2xl py-2.5`}>
-                <p className={`text-lg font-black ${s.color}`}>{s.value}</p>
-                <p className="text-[9px] text-emerald-200 font-medium">{s.label}</p>
-              </div>
-            ))}
+              { label: isKm ? 'វត្តមាន' : 'Present', value: presentCount, icon: CheckCircle, color: 'text-cyan-300', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
+              { label: isKm ? 'អវត្តមាន' : 'Absent',  value: absentCount, icon: XCircle, color: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
+              { label: isKm ? 'ច្បាប់' : 'Leave',     value: permissionCount, icon: CalendarCheck, color: 'text-violet-300', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+              { label: isKm ? 'យឺត' : 'Late',          value: lateCount, icon: Warning, color: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+            ].map((s) => {
+              const SIcon = s.icon;
+              return (
+                <div key={s.label} className={`text-center ${s.bg} ${s.border} border rounded-2xl py-2.5 sm:py-3 px-2 backdrop-blur-sm`}>
+                  <SIcon size={13} weight="fill" className={`${s.color} mx-auto mb-1 opacity-90`} />
+                  <p className={`text-base sm:text-lg font-black ${s.color}`}>{s.value}</p>
+                  <p className="text-[9px] text-slate-300 font-medium truncate">{s.label}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -194,10 +210,9 @@ export default function StudentAttendancePage() {
               onClick={() => setFilter(p.key as any)}
               className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer border ${
                 isActive
-                  ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/25'
-                  : 'border-white/5 text-slate-400 hover:text-white hover:border-white/10'
+                  ? 'bg-gradient-to-r from-cyan-500 to-sky-500 border-cyan-400/40 text-white shadow-md shadow-cyan-500/25'
+                  : 'border-neutral-200 bg-white text-neutral-500 hover:text-neutral-900 hover:border-cyan-500/30 hover:bg-cyan-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:text-white dark:hover:border-cyan-500/30 dark:hover:bg-cyan-500/5'
               }`}
-              style={!isActive ? { background: 'rgba(255,255,255,0.03)' } : {}}
             >
               {p.label}
             </button>
@@ -205,8 +220,7 @@ export default function StudentAttendancePage() {
         })}
         <button
           onClick={load}
-          className="ml-auto p-2 rounded-xl border border-white/5 text-slate-500 hover:text-emerald-400 transition cursor-pointer"
-          style={{ background: 'rgba(255,255,255,0.03)' }}
+          className="ml-auto p-2 rounded-xl border border-neutral-200 bg-white text-neutral-500 hover:text-cyan-600 hover:border-cyan-500/30 hover:bg-cyan-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400 dark:hover:text-cyan-300 dark:hover:border-cyan-500/30 transition cursor-pointer"
           title={isKm ? 'ធ្វើបច្ចុប្បន្នភាព' : 'Refresh'}
         >
           <ArrowClockwise size={14} />
@@ -215,14 +229,11 @@ export default function StudentAttendancePage() {
 
       {/* Records grouped by Month */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <SpinnerGap size={28} className="animate-spin text-emerald-500 mb-2" />
-          <p className="text-xs">{isKm ? 'កំពុងទាញទិន្នន័យ...' : 'Loading records...'}</p>
-        </div>
+        <SkeletonList count={5} withAvatar={false} />
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-          <CalendarCheck size={36} className="mb-2 opacity-20" />
-          <p className="text-xs">{isKm ? 'មិនមានកំណត់ត្រាក្នុងប្រភេទនេះ' : 'No records in this category'}</p>
+        <div className="flex flex-col items-center justify-center py-16 text-neutral-500 dark:text-slate-500 rounded-2xl border border-dashed border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.02]">
+          <CalendarCheck size={36} className="mb-2 opacity-30 text-cyan-600 dark:text-cyan-400" />
+          <p className="text-xs text-neutral-500 dark:text-slate-400">{isKm ? 'មិនមានកំណត់ត្រាក្នុងប្រភេទនេះ' : 'No records in this category'}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -237,63 +248,62 @@ export default function StudentAttendancePage() {
             return (
               <div
                 key={monthKey}
-                className="rounded-2xl overflow-hidden border"
-                style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}
+                className="rounded-2xl overflow-hidden border border-cyan-200/70 bg-white shadow-sm dark:border-cyan-500/10 dark:bg-[#10151c] dark:shadow-lg dark:shadow-black/20"
               >
                 {/* Month header */}
                 <button
                   onClick={() => toggleGroup(monthKey)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition cursor-pointer"
+                  className="w-full flex items-center justify-between flex-wrap gap-x-3 gap-y-2 px-4 py-3 hover:bg-cyan-50 dark:hover:bg-cyan-500/[0.04] transition cursor-pointer"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <CalendarCheck size={14} className="text-emerald-500" />
-                    <span className="text-xs font-bold text-white">{monthKey}</span>
-                    <span className="text-[10px] text-slate-500">{monthRecords.length} {isKm ? 'ថ្ងៃ' : 'days'}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <CalendarCheck size={14} className="text-cyan-400 shrink-0" />
+                    <span className="text-xs font-bold text-neutral-900 dark:text-white truncate">{monthKey}</span>
+                    <span className="text-[10px] text-slate-500 shrink-0">{monthRecords.length} {isKm ? 'ថ្ងៃ' : 'days'}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-[10px] font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full dark:text-cyan-300 dark:bg-cyan-500/10 dark:border-cyan-500/20">
                       {mPresent} {isKm ? 'វ' : 'P'}
                     </span>
                     {mAbsent > 0 && (
-                      <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full dark:text-rose-300 dark:bg-rose-500/10 dark:border-rose-500/20">
                         {mAbsent} {isKm ? 'អ' : 'A'}
                       </span>
                     )}
                     {mPerm > 0 && (
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full dark:text-violet-300 dark:bg-violet-500/10 dark:border-violet-500/20">
                         {mPerm} {isKm ? 'ច' : 'L'}
                       </span>
                     )}
-                    <span className="text-[10px] font-bold text-slate-400">{mRate}%</span>
-                    {isCollapsed ? <CaretDown size={12} className="text-slate-500" /> : <CaretUp size={12} className="text-slate-500" />}
+                    <span className="text-[10px] font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full dark:text-cyan-300 dark:bg-cyan-500/[0.08] dark:border-cyan-500/20">{mRate}%</span>
+                    {isCollapsed ? <CaretDown size={12} className="text-slate-500 shrink-0" /> : <CaretUp size={12} className="text-slate-500 shrink-0" />}
                   </div>
                 </button>
 
                 {/* Day rows */}
                 {!isCollapsed && (
-                  <div className="divide-y divide-white/[0.04] border-t border-white/[0.04]">
+                  <div className="divide-y divide-neutral-100 border-t border-neutral-100 dark:divide-white/[0.05] dark:border-white/[0.05]">
                     {monthRecords.map((r, idx) => {
                       const cfg = STATUS_CONFIG[r.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.absent;
                       const Icon = cfg.icon;
                       return (
                         <div
                           key={idx}
-                          className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition"
+                          className={`flex items-center justify-between gap-2 px-3 sm:px-4 py-3 border-l-2 hover:bg-neutral-50 dark:hover:bg-white/[0.03] transition ${cfg.row}`}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot} shrink-0`} />
-                            <div>
-                              <p className="text-xs font-semibold text-slate-200">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-neutral-800 dark:text-slate-200 truncate">
                                 {formatDate(r.date, isKm)}
                               </p>
                               {r.notes ? (
-                                <p className="text-[10px] text-slate-500 italic mt-0.5">{r.notes}</p>
+                                <p className="text-[10px] text-neutral-500 dark:text-slate-500 italic mt-0.5 truncate">{r.notes}</p>
                               ) : (
-                                <p className="text-[10px] text-slate-600 mt-0.5">{isKm ? 'គ្មានចំណាំ' : 'No notes'}</p>
+                                <p className="text-[10px] text-neutral-400 dark:text-slate-600 mt-0.5">{isKm ? 'គ្មានចំណាំ' : 'No notes'}</p>
                               )}
                             </div>
                           </div>
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-xl border ${cfg.badge}`}>
+                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-xl border ${cfg.badge} shrink-0 whitespace-nowrap`}>
                             <Icon size={11} weight="fill" />
                             {isKm ? cfg.label.km : cfg.label.en}
                           </span>

@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { 
   ArrowLeft, CheckCircle, FileText,
-  DownloadSimple, X, Trophy, SpinnerGap, WarningCircle,
+  DownloadSimple, X, Trophy, WarningCircle,
   Sparkle, Check, XCircle, ListNumbers, Eye
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonTable } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { StatusBadge } from '@/components/dashboard/table/status-badge';
 import { api } from '@/lib/api';
@@ -187,10 +188,7 @@ export default function HomeworkReviewPage() {
 
       {/* Submissions Table */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400 bg-white dark:bg-[#15171e] rounded-3xl border border-slate-200/80 dark:border-white/[0.07]">
-          <SpinnerGap size={28} className="animate-spin text-blue-600 mb-2" />
-          <p className="text-xs font-medium">{isKm ? 'កំពុងទាញបញ្ជីការប្រគល់...' : 'Loading submissions...'}</p>
-        </div>
+        <SkeletonTable rows={5} cells={6} />
       ) : submissions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 dark:border-white/[0.1] bg-white dark:bg-[#15171e] p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.05] text-slate-400 flex items-center justify-center mb-3">

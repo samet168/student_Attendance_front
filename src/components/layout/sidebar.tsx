@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import {
   ChalkboardTeacher, Student, Users, CalendarCheck, Exam, BookOpen,
-  Receipt, Gear, CaretLeft, CaretRight, GraduationCap, Megaphone, X,
+  Receipt, Gear, CaretLeft, CaretRight, Megaphone, X,
   ShieldCheck, UserGear,
 } from '@phosphor-icons/react';
 import { useUIStore } from '@/stores/use-ui-store';
@@ -44,9 +44,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
       {/* Brand header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-blue-500/25">
-            <GraduationCap size={20} weight="fill" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="School logo"
+            className="w-9 h-9 rounded-xl object-cover shrink-0 shadow-md shadow-blue-500/25"
+          />
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight truncate">

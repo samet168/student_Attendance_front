@@ -1,19 +1,25 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { Sun, Moon } from '@phosphor-icons/react';
 import { useUIStore } from '@/stores/use-ui-store';
 
+const emptySubscribe = () => () => {};
+
+function useIsHydrated() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
 export function ThemeSwitcher() {
   const { theme, toggleTheme, language } = useUIStore();
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useIsHydrated();
   const isKm = language === 'km';
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
     );

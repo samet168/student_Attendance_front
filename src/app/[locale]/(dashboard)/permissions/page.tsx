@@ -8,6 +8,7 @@ import {
   IdentificationCard, Swap, UserPlus, BookOpen, Trash
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import { useUIStore } from '@/stores/use-ui-store';
@@ -539,7 +540,11 @@ export default function PermissionsPage() {
               <span className="text-[10px] text-slate-400">{classSubjects.length} {isKm ? 'មុខវិជ្ជា' : 'subjects'}</span>
             </div>
             {subjectsLoading ? (
-              <div className="p-8 text-center text-xs text-slate-400">{isKm ? 'កំពុងទាញ...' : 'Loading...'}</div>
+              <div className="p-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonTableRow key={i} cells={4} />
+                ))}
+              </div>
             ) : classSubjects.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-400">
                 <BookOpen size={32} className="mx-auto mb-2 opacity-20" />

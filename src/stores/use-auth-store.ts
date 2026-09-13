@@ -10,17 +10,34 @@ interface AuthState {
   logout: () => void;
 }
 
+/** Safe localStorage read — never throws, returns null on any error */
+function safeGetItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/** Safe JSON parse — never throws, returns null on any error */
+function safeParse<T>(value: string | null): T | null {
+  if (!value || value === 'undefined' || value === 'null' || value.trim() === '') {
+    return null;
+  }
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
-  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
-  user: typeof window !== 'undefined' ? (() => {
-    try {
-      const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  })() : null,
-  isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+  // Always start as null/false on server — client hydrates after mount
+  token: null,
+  user: null,
+  isAuthenticated: false,
+
   setAuth: (token, user) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token);
@@ -28,12 +45,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     set({ token, user, isAuthenticated: true });
   },
+
   setUser: (user) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('user', JSON.stringify(user));
     }
     set({ user });
   },
+
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
@@ -42,3 +61,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ token: null, user: null, isAuthenticated: false });
   },
 }));
+
+/**
+ * Call this once inside a useEffect (client-only) to hydrate the store
+ * from localStorage after the component mounts.
+ * Usage: useEffect(() => { hydrateAuthStore(); }, []);
+ */
+export function hydrateAuthStore() {
+  if (typeof window === 'undefined') return;
+  const token = safeGetItem('token');
+  const user  = safeParse<UserProfile>(safeGetItem('user'));
+  useAuthStore.setState({
+    token,
+    user,
+    isAuthenticated: !!token,
+  });
+}

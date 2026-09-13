@@ -20,36 +20,12 @@ function VerifyOtpForm() {
   const isKm = locale === 'km';
 
   const emailParam = searchParams.get('email') || '';
-  const devOtp = searchParams.get('dev_otp');
 
   const { setAuth } = useAuthStore();
-  const [activeOtp, setActiveOtp] = useState<string | null>(devOtp || null);
-  const [otp, setOtp] = useState<string[]>(devOtp && devOtp.length === 6 ? devOtp.split('') : ['', '', '', '', '', '']);
+  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    if (emailParam) {
-      const apiBase = getApiBaseUrl();
-      fetch(`${apiBase}/auth/latest-otp?email=${encodeURIComponent(emailParam)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.code) {
-            setActiveOtp(data.code);
-            setOtp(data.code.split(''));
-          }
-        })
-        .catch(() => {});
-    }
-  }, [emailParam]);
-
-  useEffect(() => {
-    if (devOtp && devOtp.length === 6) {
-      setActiveOtp(devOtp);
-      setOtp(devOtp.split(''));
-    }
-  }, [devOtp]);
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) {

@@ -9,6 +9,7 @@ import {
   Smiley, SmileyMeh, SmileySad, ArrowRight,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
@@ -308,10 +309,7 @@ export default function StudentHomeworkPage() {
         {renderBanners()}
 
         {loadingList ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <SpinnerGap size={28} className="animate-spin text-blue-600 mb-2" />
-            <p className="text-xs text-slate-400">{isKm ? 'កំពុងទាញ...' : 'Loading...'}</p>
-          </div>
+          <SkeletonList count={4} withAvatar={false} />
         ) : homeworks.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-12 text-center flex flex-col items-center">
             <BookOpen size={32} className="text-slate-300 mb-3" />

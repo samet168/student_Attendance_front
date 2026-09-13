@@ -13,7 +13,7 @@ const DropdownContext = React.createContext<DropdownContextType>({
   setOpen: () => {},
 });
 
-export function DropdownMenu({ children }: { children: React.ReactNode }) {
+export function DropdownMenu({ children, className }: { children: React.ReactNode; className?: string }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -29,7 +29,7 @@ export function DropdownMenu({ children }: { children: React.ReactNode }) {
 
   return (
     <DropdownContext.Provider value={{ open, setOpen }}>
-      <div ref={ref} className="relative inline-block text-left">
+      <div ref={ref} className={cn('relative w-full text-left', className)}>
         {children}
       </div>
     </DropdownContext.Provider>
@@ -59,7 +59,7 @@ export function DropdownMenuTrigger({
   return (
     <button
       onClick={() => setOpen(!open)}
-      className={cn('inline-flex items-center justify-center cursor-pointer', className)}
+      className={cn('inline-flex items-center justify-center cursor-pointer w-full', className)}
     >
       {children}
     </button>
@@ -67,8 +67,8 @@ export function DropdownMenuTrigger({
 }
 
 export function DropdownMenuContent({
-  align = 'right',
-  side = 'bottom',
+  align = 'left',
+  side = 'top',
   className,
   children,
 }: {
@@ -83,8 +83,8 @@ export function DropdownMenuContent({
   return (
     <div
       className={cn(
-        'absolute z-50 min-w-[200px] rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 p-1.5 text-slate-700 dark:text-slate-200 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-150',
-        side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+        'absolute z-50 min-w-[220px] rounded-2xl border border-slate-200/90 dark:border-white/[0.1] bg-white/98 dark:bg-[#151720] p-1.5 text-slate-800 dark:text-slate-100 shadow-2xl shadow-black/80 backdrop-blur-2xl transition-all duration-200 animate-in fade-in zoom-in-95',
+        side === 'top' ? 'bottom-full mb-2.5' : 'top-full mt-2.5',
         align === 'right' ? 'right-0' : 'left-0',
         className
       )}
@@ -111,7 +111,7 @@ export function DropdownMenuItem({
         setOpen(false);
       }}
       className={cn(
-        'flex w-full items-center px-3 py-2 text-xs font-medium rounded-xl hover:bg-slate-100/90 dark:hover:bg-slate-800/90 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-left',
+        'flex w-full items-center px-3 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-all duration-150 cursor-pointer text-left',
         className
       )}
     >
@@ -121,5 +121,6 @@ export function DropdownMenuItem({
 }
 
 export function DropdownMenuSeparator({ className }: { className?: string }) {
-  return <div className={cn('my-1 h-px bg-slate-100 dark:bg-slate-800', className)} />;
+  return <div className={cn('my-1 h-px bg-slate-200/80 dark:bg-white/[0.08]', className)} />;
 }
+

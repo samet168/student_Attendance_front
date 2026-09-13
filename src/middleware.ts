@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect if there is no locale
   if (pathname === '/') {
-    return NextResponse.redirect(new URL(`/${defaultLocale}/dashboard`, request.url));
+    return NextResponse.redirect(new URL(`/${defaultLocale}/login`, request.url));
   }
 
   return NextResponse.redirect(new URL(`/${defaultLocale}${pathname}`, request.url));

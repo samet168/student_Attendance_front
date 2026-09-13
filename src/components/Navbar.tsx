@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SignOut, GraduationCap, MagnifyingGlass } from '@phosphor-icons/react';
+import { SignOut, MagnifyingGlass } from '@phosphor-icons/react';
 import { User } from '@/types';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { NotificationPopover } from '@/components/layout/notification-popover';
@@ -21,9 +21,11 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
       <div className="flex items-center justify-between gap-4">
         {/* Left: Brand */}
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <GraduationCap size={22} weight="fill" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="School logo"
+            className="w-9 h-9 rounded-xl object-cover shadow-md shadow-blue-500/20"
+          />
           <div className="hidden sm:block">
             <h1 className="text-sm font-bold text-slate-900 leading-tight">{t.systemName}</h1>
             <p className="text-[10px] text-slate-500">FastAPI &amp; PostgreSQL Enterprise</p>

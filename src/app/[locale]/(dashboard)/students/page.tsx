@@ -56,6 +56,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
+import { SkeletonTable, SkeletonCardGrid } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -1266,10 +1267,11 @@ export default function StudentsPage() {
 
       {/* ── 6. Main Sortable Data Container ─────────────────────────── */}
       {loading ? (
-        <div className="py-24 text-center text-slate-400 text-xs flex flex-col items-center gap-3 bg-white dark:bg-[#15171e] rounded-2xl border border-slate-200/80 dark:border-white/[0.07]">
-          <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="font-medium">{isKm ? 'កំពុងទាញយកទិន្នន័យសិស្ស...' : 'Loading students...'}</span>
-        </div>
+        viewMode === 'grid' ? (
+          <SkeletonCardGrid count={8} />
+        ) : (
+          <SkeletonTable rows={6} cells={6} />
+        )
       ) : filteredStudents.length === 0 ? (
         <div className="py-20 text-center text-slate-400 text-xs bg-white dark:bg-[#15171e] rounded-2xl border border-slate-200/80 dark:border-white/[0.07]">
           {isKm ? 'មិនមានទិន្នន័យសិស្សត្រូវនឹងលក្ខខណ្ឌស្វែងរកទេ' : 'No students found.'}

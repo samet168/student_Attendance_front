@@ -9,6 +9,7 @@ import {
   PencilSimple, CheckCircle, SpinnerGap, X, Camera, GraduationCap
 } from '@phosphor-icons/react';
 import { StudentIdCard } from '@/components/student/student-id-card';
+import { SkeletonProfile } from '@/components/ui/skeleton';
 
 export default function StudentProfilePage() {
   const params = useParams();
@@ -105,8 +106,8 @@ export default function StudentProfilePage() {
       setAvatarFile(null);
       setSuccessMsg(isKm ? 'បានកែប្រែព័ត៌មានដោយជោគជ័យ!' : 'Profile updated successfully!');
       setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -117,17 +118,17 @@ export default function StudentProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <SpinnerGap size={32} className="animate-spin text-violet-500" />
+      <div className="max-w-xl mx-auto">
+        <SkeletonProfile />
       </div>
     );
   }
 
   const infoFields = [
-    { icon: UserCircle, label: isKm ? 'ឈ្មោះ' : 'Full Name', value: name, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-    { icon: EnvelopeSimple, label: isKm ? 'អ៊ីមែល' : 'Email', value: profile?.email || '—', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-    { icon: Phone, label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone', value: profile?.phone || (isKm ? 'មិនទាន់បញ្ចូល' : 'Not set'), color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-    { icon: IdentificationCard, label: isKm ? 'អត្តលេខសិស្ស' : 'Student ID', value: profile?.student_code || '—', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+    { icon: UserCircle, label: isKm ? 'ឈ្មោះ' : 'Full Name', value: name, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10', border: 'border-violet-200 dark:border-violet-500/20' },
+    { icon: EnvelopeSimple, label: isKm ? 'អ៊ីមែល' : 'Email', value: profile?.email || '—', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/20' },
+    { icon: Phone, label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone', value: profile?.phone || (isKm ? 'មិនទាន់បញ្ចូល' : 'Not set'), color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-500/20' },
+    { icon: IdentificationCard, label: isKm ? 'អត្តលេខសិស្ស' : 'Student ID', value: profile?.student_code || '—', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/20' },
   ];
 
   return (
@@ -180,16 +181,15 @@ export default function StudentProfilePage() {
       </div>
 
       {successMsg && (
-        <div className="p-3.5 rounded-2xl border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2"
-          style={{ background: 'rgba(16,185,129,0.08)' }}>
+        <div className="p-3.5 rounded-2xl border border-emerald-500/20 text-emerald-700 bg-emerald-50 text-xs flex items-center gap-2 dark:text-emerald-400 dark:bg-emerald-500/[0.08]">
           <CheckCircle size={16} weight="fill" className="text-emerald-500 shrink-0" /> {successMsg}
         </div>
       )}
 
       {/* Digital Student ID Card */}
-      <div className="rounded-3xl p-5 border border-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <IdentificationCard size={16} className="text-violet-400" />
+      <div className="rounded-3xl p-5 border border-neutral-200 bg-white dark:border-white/5 dark:bg-white/[0.02]">
+        <h2 className="text-xs font-bold text-neutral-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <IdentificationCard size={16} className="text-violet-600 dark:text-violet-400" />
           <span>{isKm ? 'កាតសិស្សឌីជីថល' : 'Digital Student ID Card'}</span>
         </h2>
         {profile && (
@@ -201,21 +201,20 @@ export default function StudentProfilePage() {
       </div>
 
       {/* Info Fields */}
-      <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden dark:border-white/5 dark:bg-white/[0.02]">
         {infoFields.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={item.label}
-              className="flex items-center gap-4 px-4 py-3.5 hover:bg-white/[0.02] transition"
-              style={{ borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined }}
+              className={`flex items-center gap-4 px-4 py-3.5 transition hover:bg-neutral-50 dark:hover:bg-white/[0.02] ${idx > 0 ? 'border-t border-neutral-100 dark:border-white/[0.05]' : ''}`}
             >
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.bg} border ${item.border}`}>
                 <Icon size={16} weight="bold" className={item.color} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-600 font-medium">{item.label}</p>
-                <p className="text-xs font-semibold text-slate-200 mt-0.5 truncate">{item.value}</p>
+                <p className="text-[10px] text-neutral-500 dark:text-slate-600 font-medium">{item.label}</p>
+                <p className="text-xs font-semibold text-neutral-800 dark:text-slate-200 mt-0.5 truncate">{item.value}</p>
               </div>
             </div>
           );
@@ -236,24 +235,23 @@ export default function StudentProfilePage() {
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
-            className="relative rounded-3xl w-full max-w-md p-6 shadow-2xl border border-white/10"
-            style={{ background: '#12141f' }}
+            className="relative rounded-3xl w-full max-w-md p-6 shadow-2xl border border-neutral-200 bg-white dark:border-white/10 dark:bg-[#12141f]"
           >
-            <button onClick={() => setEditing(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white cursor-pointer transition">
+            <button onClick={() => setEditing(false)} className="absolute top-4 right-4 text-neutral-500 hover:text-neutral-900 cursor-pointer transition dark:text-slate-500 dark:hover:text-white">
               <X size={18} />
             </button>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-violet-50 border border-violet-200 text-violet-600 flex items-center justify-center dark:bg-violet-500/10 dark:border-violet-500/20 dark:text-violet-400">
                 <PencilSimple size={18} weight="bold" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">{isKm ? 'កែប្រែគណនី' : 'Edit Profile'}</h3>
-                <p className="text-xs text-slate-500">{isKm ? 'ធ្វើបច្ចុប្បន្នភាពឈ្មោះ ទូរស័ព្ទ និង Avatar' : 'Update your name, phone and avatar'}</p>
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white">{isKm ? 'កែប្រែគណនី' : 'Edit Profile'}</h3>
+                <p className="text-xs text-neutral-500 dark:text-slate-500">{isKm ? 'ធ្វើបច្ចុប្បន្នភាពឈ្មោះ ទូរស័ព្ទ និង Avatar' : 'Update your name, phone and avatar'}</p>
               </div>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400">
                 {error}
               </div>
             )}
@@ -264,22 +262,21 @@ export default function StudentProfilePage() {
                 { label: isKm ? 'លេខទូរស័ព្ទ' : 'Phone Number', required: false, type: 'text', value: editPhone, onChange: (e: any) => setEditPhone(e.target.value), placeholder: '012 345 678' },
               ].map((f) => (
                 <div key={f.label}>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">{f.label} {f.required && '*'}</label>
+                  <label className="block text-xs font-semibold text-neutral-600 dark:text-slate-400 mb-1.5">{f.label} {f.required && '*'}</label>
                   <input
                     type={f.type}
                     required={f.required}
                     value={f.value}
                     onChange={f.onChange}
                     placeholder={f.placeholder}
-                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-white/8 text-white outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition"
-                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-300 text-neutral-900 bg-neutral-50 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition dark:border-white/8 dark:text-white dark:bg-white/[0.05]"
                   />
                 </div>
               ))}
 
               {/* Avatar Upload — file picker instead of URL */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label className="block text-xs font-semibold text-neutral-600 dark:text-slate-400 mb-1.5">
                   {isKm ? 'រូបភាព Avatar' : 'Profile Picture'}
                 </label>
 
@@ -301,11 +298,10 @@ export default function StudentProfilePage() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="text-[11px] text-slate-400 mb-1.5">
+                    <p className="text-[11px] text-neutral-500 dark:text-slate-400 mb-1.5">
                       {isKm ? 'JPG, PNG, WEBP — អតិបរមា 5MB' : 'JPG, PNG, WEBP — max 5MB'}
                     </p>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-300 border border-violet-500/30 cursor-pointer hover:bg-violet-500/10 transition"
-                      style={{ background: 'rgba(124,58,237,0.08)' }}>
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-700 border border-violet-200 bg-violet-50 cursor-pointer hover:bg-violet-100 transition dark:text-violet-300 dark:border-violet-500/30 dark:bg-violet-500/[0.08] dark:hover:bg-violet-500/10">
                       <Camera size={13} weight="bold" />
                       {uploadingAvatar
                         ? (isKm ? 'កំពុង Upload...' : 'Uploading...')
@@ -325,7 +321,7 @@ export default function StudentProfilePage() {
                     <button
                       type="button"
                       onClick={() => { setAvatarFile(null); setAvatarPreview(editAvatar); }}
-                      className="text-slate-600 hover:text-rose-400 transition cursor-pointer p-1"
+                      className="text-neutral-500 hover:text-rose-600 transition cursor-pointer p-1 dark:text-slate-600 dark:hover:text-rose-400"
                       title={isKm ? 'លប់ចោលការជ្រើស' : 'Remove selection'}
                     >
                       <X size={15} />
@@ -335,20 +331,19 @@ export default function StudentProfilePage() {
 
                 {/* Selected file name indicator */}
                 {avatarFile && (
-                  <div className="px-3 py-2 rounded-xl text-[11px] text-violet-300 flex items-center gap-1.5"
-                    style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                    <CheckCircle size={12} weight="fill" className="text-violet-400 shrink-0" />
+                  <div className="px-3 py-2 rounded-xl text-[11px] text-violet-700 bg-violet-50 flex items-center gap-1.5 border border-violet-200 dark:text-violet-300 dark:bg-violet-500/[0.1] dark:border-violet-500/20">
+                    <CheckCircle size={12} weight="fill" className="text-violet-600 dark:text-violet-400 shrink-0" />
                     <span className="truncate">{avatarFile.name}</span>
-                    <span className="text-slate-500 flex-shrink-0">
+                    <span className="text-neutral-400 flex-shrink-0 dark:text-slate-500">
                       ({(avatarFile.size / 1024).toFixed(0)} KB)
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-white/6">
+              <div className="flex gap-2 pt-2 border-t border-neutral-200 dark:border-white/6">
                 <button type="button" onClick={() => setEditing(false)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-white/8 text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer">
+                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-neutral-300 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition cursor-pointer dark:border-white/8 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5">
                   {isKm ? 'បោះបង់' : 'Cancel'}
                 </button>
                 <button type="submit" disabled={saving || uploadingAvatar}

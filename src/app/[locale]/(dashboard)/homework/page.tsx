@@ -10,6 +10,7 @@ import {
   MagnifyingGlass, Funnel, FileArrowDown
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import { useUIStore } from '@/stores/use-ui-store';
 import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
@@ -680,10 +681,7 @@ export default function HomeworkPage() {
 
       {/* Homework list */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-          <SpinnerGap size={28} className="animate-spin text-blue-600 mb-2" />
-          <p className="text-xs">{isKm ? 'កំពុងទាញទិន្នន័យ...' : 'Loading assignments...'}</p>
-        </div>
+        <SkeletonList count={5} withAvatar={false} />
       ) : homeworks.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-[#282a32] bg-white/50 dark:bg-[#1c1d22]/50 p-12 text-center flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">

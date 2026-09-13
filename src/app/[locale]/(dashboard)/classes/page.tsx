@@ -9,6 +9,7 @@ import {
   MagnifyingGlass, Funnel, FileArrowDown
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonTable, SkeletonCardGrid } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/use-auth-store';
@@ -263,8 +264,14 @@ export default function ClassesPage() {
         <ViewModeToggle />
       </div>
 
-      {/* Empty State */}
-      {!loading && classes.length === 0 && (
+      {/* Loading / Empty State */}
+      {loading ? (
+        viewMode === 'table' ? (
+          <SkeletonTable rows={5} cells={4} />
+        ) : (
+          <SkeletonCardGrid count={6} />
+        )
+      ) : classes.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-200 dark:border-[#282a32] bg-white/50 dark:bg-[#16171b]/50 p-12 text-center">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
             <ChalkboardTeacher size={28} weight="duotone" />
@@ -288,10 +295,10 @@ export default function ClassesPage() {
             <span>{isKm ? 'បង្កើតថ្នាក់ថ្មីឥឡូវនេះ' : 'Create Class Now'}</span>
           </Button>
         </div>
-      )}
+      ) : null}
 
       {/* Classes Display: Table or Grid */}
-      {viewMode === 'table' ? (
+      {!loading && (viewMode === 'table' ? (
         <div className="rounded-2xl border border-slate-200/80 dark:border-[#282a32] bg-white dark:bg-[#1c1d22] overflow-hidden shadow-xs">
           <Table>
             <TableHeader>
@@ -437,7 +444,7 @@ export default function ClassesPage() {
               </div>
             ))}
         </div>
-      )}
+      ))}
 
       {/* Modal: Create Class */}
       {showModal && (

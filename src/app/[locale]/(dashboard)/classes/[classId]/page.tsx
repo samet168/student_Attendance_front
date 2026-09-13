@@ -8,6 +8,7 @@ import {
   X, PencilSimple, ArrowsLeftRight 
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
 
@@ -262,7 +263,7 @@ export default function ClassDetailsPage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
             <Users size={18} className="text-blue-600 dark:text-blue-400" />
-            <span>{isKm ? `បញ្ជីសិស្សក្នុងថ្នាក់ (${students.length} នាក់)` : `Enrolled Students (${students.length})`}</span>
+            <span>{isKm ? `បញ្ជីសិស្សក្នុងថ្នាក់ (${loading ? '...' : students.length} នាក់)` : `Enrolled Students (${loading ? '...' : students.length})`}</span>
           </h3>
           <Button 
             onClick={() => setShowModal(true)}
@@ -286,7 +287,19 @@ export default function ClassDetailsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {students.length === 0 ? (
+            {loading ? (
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="border-slate-100 dark:border-[#282a32]">
+                    {Array.from({ length: 6 }).map((_, c) => (
+                      <TableCell key={c} className="py-3.5">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </>
+            ) : students.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-xs text-slate-400">
                   {isKm ? 'មិនទាន់មានសិស្សចុះឈ្មោះក្នុងថ្នាក់នេះនៅឡើយទេ' : 'No students enrolled in this class yet.'}

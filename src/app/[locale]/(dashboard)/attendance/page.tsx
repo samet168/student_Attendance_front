@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import {
   CalendarCheck, FloppyDisk, CheckCircle,
   FileXls, FileDoc, FilePpt, CaretDown, DownloadSimple,
-  SquaresFour, ListDashes, DotsSixVertical, Funnel, FileArrowDown, Sparkle
+  SquaresFour, ListDashes, DotsSixVertical, Funnel, FileArrowDown
 } from '@phosphor-icons/react';
 import {
   DndContext,
@@ -27,12 +27,13 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/stores/use-auth-store';
-import { useUIStore } from '@/stores/use-ui-store';
-import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 import { exportToExcelFile } from '@/lib/exporters/export-excel';
 import { exportToWordFile } from '@/lib/exporters/export-word';
 import { exportToPptxFile } from '@/lib/exporters/export-pptx';
+import { useAuthStore } from '@/stores/use-auth-store';
+import { useUIStore } from '@/stores/use-ui-store';
+import { Skeleton, SkeletonCardGrid } from '@/components/ui/skeleton';
+import { ViewModeToggle } from '@/components/dashboard/view-mode-toggle';
 
 interface AttendanceRecord {
   student_id: number;
@@ -683,7 +684,7 @@ export default function AttendancePage() {
         {/* View Mode Toggle & Filter */}
         <div className="sm:col-span-12 flex justify-between items-center">
           {/* Filter Popover */}
-          <div className="relative">
+          <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#1c1d25] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition cursor-pointer"
@@ -826,11 +827,17 @@ export default function AttendancePage() {
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-xs text-slate-400">
-                        {isKm ? 'កំពុងទាញយកទិន្នន័យវត្តមាន...' : 'Loading attendance records...'}
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i} className="border-slate-100 dark:border-[#282a32]">
+                          {Array.from({ length: 8 }).map((_, c) => (
+                            <TableCell key={c} className="py-3.5">
+                              <Skeleton className="h-4 w-full" />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </>
                   ) : records.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-xs text-slate-400">
@@ -858,8 +865,8 @@ export default function AttendancePage() {
           <SortableContext items={records.map((r) => r.student_id)} strategy={verticalListSortingStrategy}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {loading ? (
-                <div className="col-span-full text-center py-8 text-xs text-slate-400">
-                  {isKm ? 'កំពុងទាញយកទិន្នន័យវត្តមាន...' : 'Loading attendance records...'}
+                <div className="col-span-full">
+                  <SkeletonCardGrid count={8} />
                 </div>
               ) : records.length === 0 ? (
                 <div className="col-span-full text-center py-8 text-xs text-slate-400">

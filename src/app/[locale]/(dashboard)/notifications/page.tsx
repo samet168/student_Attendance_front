@@ -8,6 +8,7 @@ import {
   Trash, Broadcast, Clock, DownloadSimple 
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { playNotificationSound } from '@/lib/audio';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/use-auth-store';
@@ -87,6 +88,7 @@ export default function TeacherNotificationsPage() {
   const [successBanner, setSuccessBanner] = useState(false);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
 
   useEffect(() => {
     loadNotifications();
@@ -114,6 +116,8 @@ export default function TeacherNotificationsPage() {
       }
     } catch {
       setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
     }
   };
 
@@ -417,11 +421,16 @@ export default function TeacherNotificationsPage() {
                   {isKm ? 'ប្រវត្តិនៃការជូនដំណឹងដែលបានផ្ញើ' : 'Broadcast History'}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {notifications.length} {isKm ? 'ដំណឹងដែលបានផ្សព្វផ្សាយ' : 'announcements dispatched'}
+                  {notificationsLoading ? '...' : `${notifications.length} ${isKm ? 'ដំណឹងដែលបានផ្សព្វផ្សាយ' : 'announcements dispatched'}`}
                 </p>
               </div>
             </div>
 
+            {notificationsLoading ? (
+              <div className="pt-1">
+                <SkeletonList count={4} withAvatar={false} />
+              </div>
+            ) : (
             <div className="divide-y divide-slate-100 dark:divide-[#282a32] space-y-3 pt-1">
               {notifications.map((item) => (
                 <div
@@ -486,7 +495,8 @@ export default function TeacherNotificationsPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

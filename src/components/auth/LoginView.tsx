@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, ArrowRight, ShieldCheck, RefreshCw, KeyRound, CheckCircle2, GraduationCap } from 'lucide-react';
+import { Mail, ArrowRight, ShieldCheck, RefreshCw, KeyRound, CheckCircle2 } from 'lucide-react';
 import { api, setAuthToken } from '@/lib/api';
 import { User } from '@/types';
 
@@ -72,9 +72,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* App Logo & Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-xl shadow-blue-500/25 mb-3">
-            <GraduationCap className="w-9 h-9" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="School logo"
+            className="inline-block w-20 h-20 rounded-2xl object-cover shadow-xl shadow-blue-500/25 mb-3"
+          />
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">ប្រព័ន្ធគ្រប់គ្រងសាលារៀន</h2>
           <p className="text-sm text-slate-500 mt-1">Smart School & Classroom Portal</p>
         </div>

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: smart-school-frontend
+    runtime: node
+    region: singapore
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /
+    envVars:
+      # ── Set this to your backend Render URL after backend is deployed ─────
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://managermant-stu-backe.onrender.com/api/v1"
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"

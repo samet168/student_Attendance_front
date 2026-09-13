@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   House, CalendarCheck, Exam, BookOpen, Receipt, UserCircle,
-  CaretLeft, CaretRight, GraduationCap
+  CaretLeft, CaretRight
 } from '@phosphor-icons/react';
 import { useUIStore } from '@/stores/use-ui-store';
 import { useParams, usePathname } from 'next/navigation';
@@ -28,25 +28,23 @@ export function StudentSidebar() {
 
   return (
     <aside
-      className={`flex flex-col justify-between transition-all duration-300 z-30 shrink-0 select-none border-r ${
+      className={`flex flex-col justify-between transition-all duration-300 z-30 shrink-0 select-none border-r bg-white dark:bg-[#080a10] border-neutral-200 dark:border-white/[0.06] ${
         sidebarCollapsed ? 'w-[72px]' : 'w-64'
       }`}
-      style={{ background: '#080a10', borderColor: 'rgba(255,255,255,0.06)' }}
     >
       <div>
         {/* Brand Header */}
-        <div
-          className="h-16 flex items-center justify-between px-4 border-b"
-          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-        >
+        <div className="h-16 flex items-center justify-between px-4 border-b border-neutral-200 dark:border-white/[0.06]">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-violet-900/50">
-              <GraduationCap size={20} weight="fill" />
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="School logo"
+              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-lg shadow-slate-900/10 dark:shadow-violet-900/50"
+            />
             {!sidebarCollapsed && (
               <div className="flex flex-col overflow-hidden">
-                <span className="font-bold text-white text-sm tracking-tight truncate">Smart School</span>
-                <span className="text-[11px] text-violet-400 font-medium truncate">
+                <span className="font-bold text-neutral-900 dark:text-white text-sm tracking-tight truncate">Smart School</span>
+                <span className="text-[11px] text-neutral-500 dark:text-violet-400 font-medium truncate">
                   {isKm ? 'វិបផតថលសិស្ស' : 'Student Portal'}
                 </span>
               </div>
@@ -54,7 +52,7 @@ export function StudentSidebar() {
           </div>
           <button
             onClick={toggleSidebar}
-            className="p-1.5 text-slate-500 hover:text-slate-200 rounded-lg hover:bg-white/5 transition cursor-pointer"
+            className="p-1.5 text-neutral-400 hover:text-neutral-900 dark:text-slate-500 dark:hover:text-slate-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition cursor-pointer"
             title="Toggle Sidebar"
           >
             {sidebarCollapsed ? <CaretRight size={15} /> : <CaretLeft size={15} />}
@@ -73,18 +71,18 @@ export function StudentSidebar() {
                 title={sidebarCollapsed ? item.title : undefined}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-white/10 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-neutral-900 text-white shadow-sm dark:bg-white/10 dark:text-white'
+                    : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
                 }`}
               >
                 <div
                   className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
                     isActive
                       ? `bg-gradient-to-br ${item.color} shadow-md`
-                      : 'bg-white/5 group-hover:bg-white/10'
+                      : 'bg-neutral-100 text-neutral-500 group-hover:bg-neutral-200 group-hover:text-neutral-900 dark:bg-white/5 dark:text-slate-400 dark:group-hover:bg-white/10 dark:group-hover:text-white'
                   }`}
                 >
-                  <Icon size={16} weight={isActive ? 'fill' : 'regular'} className="text-white" />
+                  <Icon size={16} weight={isActive ? 'fill' : 'regular'} className={isActive ? 'text-white' : ''} />
                 </div>
                 {!sidebarCollapsed && (
                   <span className={`text-xs font-semibold truncate ${isActive ? 'text-white' : ''}`}>
@@ -101,7 +99,7 @@ export function StudentSidebar() {
       </div>
 
       {/* User nav at bottom */}
-      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="p-3 border-t border-neutral-200 dark:border-white/[0.06]">
         <UserNav collapsed={sidebarCollapsed} />
       </div>
     </aside>
